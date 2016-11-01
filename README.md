@@ -18,7 +18,7 @@ To read the state of the port call
 The result will come as "ON", "OFF" or analog value for analog ports
 
 To set the state call:
-```http://mega_ip/sec/?cmd=2:1``` , where sec is password (max 3 chars), 2 is port number, and 1 is the value
+```http://megad_ip/sec/?cmd=2:1``` , where sec is password (max 3 chars), 2 is port number, and 1 is the value
 For digital ports only 0, 1 and 2 (toggle) are allowed, for analog ports the values from 0 to 255 are allowed
 
 The device can report the changes of ports to some web server in form
@@ -34,7 +34,7 @@ MegaD-2561 cannot report on other port than 80.
 - Poll interval: poll interval in seconds. All configured input ports will be polled in defined interval;
 - Password: password to access the device (max 3 characters). Default value "sec";
 
-MegaD-328 can report about changes on some ports if configured. 
+MegaD-2561 can report about changes on some ports if configured. 
 You can configure something like that "http://ioBrokerIP/instance" on MegaD-2561 in "Net"-Field and MegaD-2561 will send reports like this one "http://ioBrokerIP/instance/?pt=7" to ioBroker. 
 That means the button on port 7 was pressed. ioBroker expects instance number (e.g. "0") or defined name of MegaD-2561 (e.g. "DevA"). The "Net" field will look like: "http://192.168.0.8/0/".
 
@@ -116,5 +116,5 @@ ioBrokerЗначение = MegaЗначение * Множитель + Сдви�
           
 ## Changelog
 ### 0.1.0 (2016-11-01)
-* (ausHaus) extend digital temperature sensor with new type
+* (ausHaus) initial commit
 
