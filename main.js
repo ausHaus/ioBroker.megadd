@@ -28,7 +28,7 @@ var ports  = {};
 var askInternalTemp = false;
 var connected = false;
 
-var adapter = utils.adapter('megad2561');
+var adapter = utils.adapter('megadd');
 
 adapter.on('stateChange', function (id, state) {
     if (id && state && !state.ack) {
@@ -765,7 +765,7 @@ function getPortState(port, callback) {
     http.get(options, function (res) {
         var xmldata = '';
         res.on('error', function (e) {
-            adapter.log.warn('megaDD: ' + e);
+            adapter.log.warn('megaD: ' + e);
         });
         res.on('data', function (chunk) {
 
@@ -1182,12 +1182,12 @@ function restApi(req, res) {
         if (device && values.pt !== undefined) {
             // Try to find name of the instance
             if (parseInt(device, 10) == device) {
-                adapter.sendTo('megad2561.' + device, 'send', {pt: parseInt(values.pt, 10), val: values.ib});
+                adapter.sendTo('megadd.' + device, 'send', {pt: parseInt(values.pt, 10), val: values.ib});
                 res.writeHead(200, {'Content-Type': 'text/html'});
                 res.end('OK', 'utf8');
             } else {
                 // read all instances of megaD
-                adapter.getForeignObjects('system.adapter.megad2561.*', 'instance', function (err, arr) {
+                adapter.getForeignObjects('system.adapter.megadd.*', 'instance', function (err, arr) {
                     if (arr) {
                         for (var id in arr) {
                             if (arr[id].native.name == device) {
