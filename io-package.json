@@ -1,0 +1,73 @@
+{
+    "common": {
+        "name":                     "megad2561",
+        "version":                  "0.1.0",
+        "news": {
+            "0.1.0": {
+                "en":               "extend digital temperature sensor with new type",
+                "de":               "extend digital temperature sensor with new type",
+                "ru":               "extend digital temperature sensor with new type"
+            }
+        },
+        "title":                    "Mega-DD Adapter",
+        "desc":                     {
+            "en": "Lets control the MegaD-2561 over ethernet/internet (http://www.ab-log.ru/smart-house/ethernet/megad-2561)",
+            "de": "Ermöglicht die steuerung von MegaD-2561 über Ethernet/Internet (http://www.ab-log.ru/smart-house/ethernet/megad-2561)",
+            "ru": "Позволяет управлять MegaD-2561 через ethernet/интернет (http://www.ab-log.ru/smart-house/ethernet/megad-2561)"
+        },
+        "authors": [
+            "bluefox <bluefox@ccu.io>"
+        ],
+        "license":                  "MIT",
+        "platform":                 "Javascript/Node.js",
+        "mode":                     "daemon",
+        "loglevel":                 "info",
+        "icon":                     "megad.png",
+        "messagebox":               true,
+        "readme":                   "https://github.com/ioBroker/ioBroker.megad/blob/master/README.md",
+        "keywords":                 ["Mega-DD", "communication"],
+		"enabled":                  true,
+        "extIcon":                  "https://raw.githubusercontent.com/ioBroker/ioBroker.megad/master/admin/megad.png",
+        "type":                     "hardware",
+        "localLink":                "http://%native_ip%/%password%",
+        "config": {
+            "width":     1050,
+            "height":    800,
+            "minWidth":  600,
+            "minHeight": 500
+        }
+    },
+    "native": {
+        "ip":                       "",
+        "name":                     "",
+        "port":                     80,
+        "pollInterval":             30,
+        "password":                 "sec",
+        "longPress":                700,
+        "doublePress":              600,
+        "ports":                    []
+    },
+    "instanceObjects": [
+        {
+            "_id":  "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id":  "info.connection",
+            "type": "state",
+            "common": {
+                "role":  "indicator.connected",
+                "name":  "If connected to MegaDD",
+                "type":  "boolean",
+                "read":  true,
+                "write": false,
+                "def":   false
+            },
+            "native": {}
+        }
+    ]
+}
