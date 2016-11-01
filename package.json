@@ -6,14 +6,14 @@
     "name": "bluefox",
     "email": "dogafox@gmail.com"
   },
-  "homepage": "https://github.com/ioBroker/ioBroker.megadd",
+  "homepage": "https://github.com/ausHaus/ioBroker.megadd",
   "keywords": [
     "ioBroker",
     "MegaD-2561"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ioBroker/ioBroker.megadd.git"
+    "url": "git+https://github.com/ausHaus/ioBroker.megadd.git"
   },
   "dependencies": {},
   "devDependencies": {
@@ -27,7 +27,7 @@
     "keypress": "*"
   },
   "bugs": {
-    "url": "https://github.com/ioBroker/ioBroker.megadd/issues"
+    "url": "https://github.com/ausHaus/ioBroker.megadd/issues"
   },
   "main": "main.js",
   "scripts": {
@@ -38,6 +38,6 @@
   "readmeFilename": "README.md",
   "_id": "iobroker.megadd@0.1.0",
   "_shasum": "bd98a26285201c7913cf4f66d93c266f0b0f3ff2",
-  "_resolved": "https://github.com/ioBroker/ioBroker.megadd/tarball/master",
-  "_from": "https://github.com/ioBroker/ioBroker.megadd/tarball/master"
+  "_resolved": "https://github.com/ausHaus/ioBroker.megadd/tarball/master",
+  "_from": "https://github.com/ausHaus/ioBroker.megadd/tarball/master"
 }
