@@ -4,9 +4,9 @@
         "version":                  "0.1.0",
         "news": {
             "0.1.0": {
-                "en":               "extend digital temperature sensor with new type",
-                "de":               "extend digital temperature sensor with new type",
-                "ru":               "extend digital temperature sensor with new type"
+                "en":               "initial commit",
+                "de":               "initial commit",
+                "ru":               "initial commit"
             }
         },
         "title":                    "Mega-D Adapter",
