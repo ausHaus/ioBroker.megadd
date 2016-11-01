@@ -3,7 +3,7 @@ ioBroker MegaD-2561 adapter
 =================
 
 
-Lets control the [MegaD-328](http://www.ab-log.ru/smart-house/ethernet/megad-2561) over ethernet.
+Lets control the [MegaD-2561](http://www.ab-log.ru/smart-house/ethernet/megad-2561) over ethernet.
 ## English 
 [по русски](#Русский)
 
@@ -12,7 +12,7 @@ Lets control the [MegaD-328](http://www.ab-log.ru/smart-house/ethernet/megad-256
 ```node iobroker.js add megad```
 
 ### Information
-The device has 37 ports, 0-7 inputs and 8-13 outputs.
+The device has 36 ports, inputs/outputs and DHT11/DHT22, I2C bus, DS18B20 in ports and 1WBUS.
 To read the state of the port call
 ```http://mega_ip/sec/?pt=4&cmd=get``` , where sec is password (max 3 chars), 4 is port number
 The result will come as "ON", "OFF" or analog value for analog ports
