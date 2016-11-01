@@ -1,6 +1,6 @@
 {
     "common": {
-        "name":                     "megad2561",
+        "name":                     "megadd",
         "version":                  "0.1.0",
         "news": {
             "0.1.0": {
@@ -9,7 +9,7 @@
                 "ru":               "extend digital temperature sensor with new type"
             }
         },
-        "title":                    "Mega-DD Adapter",
+        "title":                    "Mega-D Adapter",
         "desc":                     {
             "en": "Lets control the MegaD-2561 over ethernet/internet (http://www.ab-log.ru/smart-house/ethernet/megad-2561)",
             "de": "Ermöglicht die steuerung von MegaD-2561 über Ethernet/Internet (http://www.ab-log.ru/smart-house/ethernet/megad-2561)",
@@ -24,10 +24,10 @@
         "loglevel":                 "info",
         "icon":                     "megad.png",
         "messagebox":               true,
-        "readme":                   "https://github.com/ioBroker/ioBroker.megad/blob/master/README.md",
-        "keywords":                 ["Mega-DD", "communication"],
+        "readme":                   "https://github.com/ausHaus/ioBroker.megadd/blob/master/README.md",
+        "keywords":                 ["Mega-D", "communication"],
 		"enabled":                  true,
-        "extIcon":                  "https://raw.githubusercontent.com/ioBroker/ioBroker.megad/master/admin/megad.png",
+        "extIcon":                  "https://raw.githubusercontent.com/ausHaus/ioBroker.megadd/master/admin/megad.png",
         "type":                     "hardware",
         "localLink":                "http://%native_ip%/%password%",
         "config": {
@@ -61,7 +61,7 @@
             "type": "state",
             "common": {
                 "role":  "indicator.connected",
-                "name":  "If connected to MegaDD",
+                "name":  "If connected to MegaD",
                 "type":  "boolean",
                 "read":  true,
                 "write": false,
