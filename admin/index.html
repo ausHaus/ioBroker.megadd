@@ -97,7 +97,6 @@
         "Cancel":               {"en": "Cancel",                "de": "Abrechen",                   "ru": "Отмена"},
         "Error":                {"en": "Error",                 "de": "Fehler",                     "ru": "Ошибка"},
         "Find devices":         {"en": "Find devices",          "de": "Suche Geräte",               "ru": "Искать устройства"},
-        ///"Internal Sensor":      {"en": "Internal Sensor",       "de": "Eingebauter Sensor",         "ru": "Internal Sensor"},  ///NAUJAS
         "PWM:":                 {"en": "PWM:",                  "de": "PWM:",                       "ru": "PWM:"},
         "Sensor type:":         {"en": "Sensor type:",          "de": "Sensortyp:",                 "ru": "Тип сенсора:"},
         "De-bounce:":           {"en": "De-bounce:",            "de": "Entprellen:",                "ru": "Дребезг:"}
@@ -137,7 +136,6 @@
         text += '<option value="2" '   + ((portSettings.pty == 2)   ? 'selected' : '') + '>' + _('ADC')             + '</option>';
         }
         text += '<option value="3" '   + ((portSettings.pty == 3)   ? 'selected' : '') + '>' + _('Digital Sensor')  + '</option>';
-        ///text += '<option value="4" '   + ((portSettings.pty == 4)   ? 'selected' : '') + '>' + _('Internal Sensor') + '</option>';   ///NAUJAS
         '</td>';
 
         // mode
@@ -149,10 +147,11 @@
                 'normal closed'
             ];
         } else if (portSettings.pty == 1) {
-            if (index == 10 || index == 11 || index == 12 || index == 13 || index == 25  || index == 27  || index == 28) {  ///NAUJAS
+            if (index == 10 || index == 11 || index == 12 || index == 13 || index == 25  || index == 27  || index == 28) {
                 modes = [
                     'switch',
-                    'PWM'
+                    'PWM',
+                    'DS2413'
                 ];
             } else {
                 modes = [
@@ -216,7 +215,6 @@
         //Sensor type
         if (portSettings.pty == 3) {
             modes = [
-                //'none',  ///NAUJAS
                 'DHT11',
                 'DHT22',
                 '1W',
@@ -224,7 +222,6 @@
                 'iB'
             ];
             text += _('Sensor type:') + ' <select class="tvalue" data-type="d" data-port="' + index + '">';
-            //text += '<option value="0" ' + ((portSettings.d == 0) ? 'selected' : '') + '>' + _('none') + '</option>';  //NAUJAS
             text += '<option value="1" ' + ((portSettings.d == 1) ? 'selected' : '') + '>DHT11</option>';
             text += '<option value="2" ' + ((portSettings.d == 2) ? 'selected' : '') + '>DHT22</option>';
             text += '<option value="3" ' + ((portSettings.d == 3) ? 'selected' : '') + '>1W</option>';
@@ -481,20 +478,6 @@
         $('#add').button({
             icons: {primary: 'ui-icon-plusthick'}
         }).click(function () {
-            /*if (ports.length == 14 || ports.length == 15) {    ///NAUJAS
-                ports.push({
-                    pty:    2,
-                    name:   'A' + (ports.length - 8),
-                    ecmd:   '',
-                    eth:    '',
-                    m:      0,
-                    factor: 1,
-                    offset: 0,
-
-                    role:   'state',
-                    room:   ''
-                });
-            } else {*/
             if (ports.length) {
                 ports.push({
                     pty:    0,
@@ -708,7 +691,6 @@
                     } else
                     if (aPorts[p].pty == 2) {
                         // ADC port
-                        ///aPorts[p].name    = ports[p].name  || ((p == 14 || p == 15) ? ('A' + (p - 8)) : ('P' + p)); ///NAUJAS
                         aPorts[p].name    = ports[p].name  || ('P' + p);
                         aPorts[p].ecmd    = aPorts[p].ecmd || '';
                         aPorts[p].eth     = aPorts[p].eth  || '';
