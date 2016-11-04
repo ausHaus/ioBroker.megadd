@@ -74,6 +74,7 @@
         "off":                  {"en": "off",                   "de": "off",                        "ru": "выкл"},
         "on":                   {"en": "on",                    "de": "on",                         "ru": "вкл"},
         "Threshold:":           {"en": "Threshold:",            "de": "Schwellwert:",               "ru": "Порог:"},
+        "Hysteresis:":          {"en": "Hysteresis:",           "de": "Hysterese:",                 "ru": "Гистерезис:"},
         "Change ip or password": {
             "en": "Change ip or password",
             "de": "IP Adresse oder Kennwort ändern",
@@ -237,6 +238,11 @@
         //misc
         if ((portSettings.pty == 2 && portSettings.m != 0) || (portSettings.pty == 3 && portSettings.d == 3 && portSettings.m != 0)) {  ///NAUJAS
             text += _('Threshold:') + ' <input class="tvalue" data-type="misc" type="text"  style="width: 70px" data-port="' + index + '" value="' + (portSettings.misc || 0) + '" maxsize="3"/>';
+        }
+        
+        //hst
+        if ((portSettings.pty == 2 && portSettings.m != 0) || (portSettings.pty == 3 && portSettings.d == 3 && portSettings.m != 0)) {
+            text += _('Hysteresis:') + ' <input class="tvalue" data-type="hst" type="text"  style="width: 70px" data-port="' + index + '" value="' + (portSettings.hst || 0) + '" maxsize="3"/>';
         }
 
         if (portSettings.pty == 2 || (portSettings.pty == 1 && portSettings.m)) {
@@ -707,6 +713,9 @@
                         aPorts[p].m       = aPorts[p].m || (_ports[p].indexOf('hum') != -1 ? 1 : 0);
                         aPorts[p].d       = aPorts[p].d || 0;
                         aPorts[p].role    = ports[p].role || 'value.temperature';
+                        if (aPorts[p].d == 4) {   ///NAUJAS
+                            aPorts[p].role    = ports[p].role || 'state';
+                        }
                     /*} else if (_ports[p].indexOf('temp:') != -1) {  ///NAUJAS
                         // temperature - internal sensor
                         aPorts[p].pty     = 4;
