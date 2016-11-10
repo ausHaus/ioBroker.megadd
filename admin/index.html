@@ -163,6 +163,7 @@
             } else {
                 modes = [
                     'switch',
+                    '',
                     'DS2413'
                 ];
             }
@@ -198,7 +199,7 @@
 
         // ecmd(Action) and eth(net action)
         ///if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && portSettings.d != 1 && portSettings.d != 2)) {
-        if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && portSettings.d == 3) || (portSettings.pty == 3 && portSettings.d == 4)) {
+        if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && (portSettings.d == 3 || portSettings.d == 4))) {
             // ecmd(Action)
             text += _('Action:') + ' <input class="tvalue" data-type="ecmd" type="text" data-port="' + index + '" value="' + (portSettings.ecmd || '') + '"  style="width: 70px" maxsize="11"/>';
             // eth(net action)
