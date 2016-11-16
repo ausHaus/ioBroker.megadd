@@ -117,7 +117,7 @@
         // name, room, role, pty(type), ecmd(Action), eth(net action), m(mode), d(default state), pwm(0-255), misc (threshold)
         var text = '<tr class="tspace">';
         // index
-        ///text += '<td class="tspace">' + ((index == 14 || index == 15) ? ('A' + (index - 8)) : ('P' + index)) + '</td>';  //NAUJAS
+        ///text += '<td class="tspace">' + ((index == 14 || index == 15) ? ('A' + (index - 8)) : ('P' + index)) + '</td>';
         text += '<td class="tspace">' + ((index == 37) ? ('P' + index) : ('P' + index)) + '</td>';
         // name
         text += '<td class="tspace"><input class="tvalue" type="text" data-type="name" data-port="' + index + '" value="' + (portSettings.name || '') + '" style="width: 100%"/></td>';
@@ -196,14 +196,19 @@
 
 
         text += '<td class="tspace">';
+        
+        // raw
+        if (portSettings.pty == 0) {
+            text += ' <input type="checkbox" class="tvalue" data-type="misc" data-port="' + index + '" ' + (portSettings.misc   ? 'checked' : '') + '/>, ';
+        }
 
         // ecmd(Action) and eth(net action)
         ///if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && portSettings.d != 1 && portSettings.d != 2)) {
         if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && (portSettings.d == 3 || portSettings.d == 4))) {
             // ecmd(Action)
-            text += _('Action:') + ' <input class="tvalue" data-type="ecmd" type="text" data-port="' + index + '" value="' + (portSettings.ecmd || '') + '"  style="width: 70px" maxsize="11"/>';
+            text += _('Action:') + ' <input class="tvalue" data-type="ecmd" type="text" data-port="' + index + '" value="' + (portSettings.ecmd || '') + '"  style="width: 70px" maxsize="11"/>, ';
             // eth(net action)
-            //text += _('Net:') + ' <input class="tvalue" data-type="eth" type="text" data-port="' + index + '" value="' + portSettings.eth  + '" style="width: 70px" maxsize="35"/>';
+            text += _('Net:') + ' <input class="tvalue" data-type="eth" type="text" data-port="' + index + '" value="' + portSettings.eth  + '" style="width: 70px" maxsize="35"/>';
         }
 
         //d(default state)
@@ -222,7 +227,7 @@
             }   
         } else if (portSettings.pty == 0) {
             ///text += _('De-bounce:') + ' <input type="checkbox" class="tvalue" data-type="d" data-port="' + index + '"/>';
-            text += _('De-bounce:') + ' <input type="checkbox" class="tvalue" data-type="d" data-port="' + index + '" ' + (portSettings.d   ? 'checked' : '') + '/>';
+            text += ', ' + _('De-bounce:') + ' <input type="checkbox" class="tvalue" data-type="d" data-port="' + index + '" ' + (portSettings.d   ? 'checked' : '') + '/>';
         }
 
         //Sensor type
@@ -242,44 +247,40 @@
             text += '<option value="4" ' + ((portSettings.d == 4) ? 'selected' : '') + '>iButton</option>';
             text += '</select>';
         }
-        //pwm
+        //pwm or smooth
         if (portSettings.pty == 1 && portSettings.m == 1 && (index == 10 || index == 11 || index == 12 || index == 13 || index == 25  || index == 27  || index == 28)) {
-            text += _('PWM:') + ' <input class="tvalue" data-type="pwm" type="text" data-port="' + index + '" value="' + (portSettings.pwm || 0) + '" size=4 maxsize="3"/>';
+            ///text += _('PWM:') + ' <input class="tvalue" data-type="pwm" type="text" data-port="' + index + '" value="' + (portSettings.pwm || 0) + '" size=4 maxsize="3"/>';
             text += ', ' + _('Smooth:') + ' <input type="checkbox" class="tvalue" data-type="misc" data-port="' + index + '" ' + (portSettings.misc   ? 'checked' : '') + '/> ';
-            if (portSettings.misc) {      ///NADO CHTOB V NASTROIKAH PRI CEBOKS OTKRIVALSIA m2
+            if (portSettings.misc == 1) {
                 text += ' <input class="tvalue" data-type="m2" type="text"  style="width: 70px" data-port="' + index + '" value="' + (portSettings.m2 || 1) + '" maxsize="3"/>';
             }
         }
         
         //freq
         if (portSettings.pty == 1 && portSettings.m == 1 && (index == 10 || index == 11 || index == 12 || index == 13 || index == 25  || index == 27  || index == 28)) {
-            text += _('Frequency:') + ' <select class="tvalue" data-type="fr" data-port="' + index + '">';
+            text += ', ' + _('Frequency:') + ' <select class="tvalue" data-type="fr" data-port="' + index + '">';
                 text += '<option value="0" ' + ((portSettings.fr == 0) ? 'selected' : '') + '>' + _('Norm') + '</option>';
                 text += '<option value="1" ' + ((portSettings.fr == 1) ? 'selected' : '') + '>' + _('Low') + '</option>';
                 text += '<option value="2" ' + ((portSettings.fr == 2) ? 'selected' : '') + '>' + _('High') + '</option>';
                 text += '</select>';
         }
 
-        //misc
-        if ((portSettings.pty == 2 && portSettings.m != 0) || (portSettings.pty == 3 && portSettings.d == 3 && portSettings.m != 0)) {  ///NAUJAS
-            text += _('Threshold:') + ' <input class="tvalue" data-type="misc" type="text"  style="width: 70px" data-port="' + index + '" value="' + (portSettings.misc || 0) + '" maxsize="3"/>';
-        }
-        
-        //hst
+        //misc or hst
         if ((portSettings.pty == 2 && portSettings.m != 0) || (portSettings.pty == 3 && portSettings.d == 3 && portSettings.m != 0)) {
+            text += ', ' + _('Threshold:') + ' <input class="tvalue" data-type="misc" type="text"  style="width: 70px" data-port="' + index + '" value="' + (portSettings.misc || 0) + '" maxsize="3"/>, ';
             text += _('Hysteresis:') + ' <input class="tvalue" data-type="hst" type="text"  style="width: 70px" data-port="' + index + '" value="' + (portSettings.hst || 0) + '" maxsize="3"/>';
         }
-
-        if (portSettings.pty == 2 || (portSettings.pty == 1 && portSettings.m)) {
-            text += _('Offset:') + ' <input class="tvalue" data-type="offset" type="text" data-port="' + index + '" style="width: 30px" value="' + (portSettings.offset || 0) + '"/>';
+        
+        if (portSettings.pty == 2 || (portSettings.pty == 1 && portSettings.m == 1 && (index == 10 || index == 11 || index == 12 || index == 13 || index == 25  || index == 27|| index == 28))) {
+            text += ', ' + _('Offset:') + ' <input class="tvalue" data-type="offset" type="text" data-port="' + index + '" style="width: 30px" value="' + (portSettings.offset || 0) + '"/>, ';
             text += _('Factor:') + ' <input class="tvalue" data-type="factor" type="text" data-port="' + index + '" style="width: 30px" value="' + (portSettings.factor || 1) + '"/>';
         }
 
         if (portSettings.pty == 0) {
             if (portSettings.m == 1) {
-                text += ', ' + _('Long:')   + ' <input type="checkbox" class="tvalue" data-type="long" data-port="' + index + '" ' + (portSettings.long   ? 'checked' : '') + '/>, ';
+                text += ', ' + _('Long:')   + ' <input type="checkbox" class="tvalue" data-type="long" data-port="' + index + '" ' + (portSettings.long   ? 'checked' : '') + '/>';
             }
-            text +=        _('Double:') + ' <input type="checkbox" class="tvalue" data-type="double" data-port="' + index + '" ' + (portSettings.double ? 'checked' : '') + '/>';
+            text += ', ' + _('Double:') + ' <input type="checkbox" class="tvalue" data-type="double" data-port="' + index + '" ' + (portSettings.double ? 'checked' : '') + '/>';
         }
         text += '</td>';
 
@@ -303,13 +304,17 @@
                 // m: 0 - on close, 1 - on change, 2 - on open
                 if (ports[index].factor !== undefined) delete ports[index].factor;
                 if (ports[index].offset !== undefined) delete ports[index].offset;
+                if (ports[index].hst    !== undefined) delete ports[index].hst;
+                if (ports[index].fr     !== undefined) delete ports[index].fr;
+                if (ports[index].m2     !== undefined) delete ports[index].m2;
                 if (ports[index].long   === undefined) ports[index].long   = true;
                 if (ports[index].double === undefined) ports[index].double = true;
 
                 if (ports[index].eth    === undefined) ports[index].eth = '';
                 if (ports[index].ecmd   === undefined) ports[index].ecmd = '';
+                if (ports[index].naf    === undefined) ports[index].naf = 0;
                 if (ports[index].d      === undefined) ports[index].d = 0;
-                if (ports[index].misc   === undefined) ports[index].misc = 1;
+                if (ports[index].misc   === undefined) ports[index].misc = 0;
                 if (ports[index].m      === undefined) ports[index].m = 0;
                 if (ports[index].m > 2) ports[index].m = 0;
 
@@ -323,10 +328,20 @@
 
                 if (ports[index].eth    !== undefined) delete ports[index].eth;
                 if (ports[index].ecmd   !== undefined) delete ports[index].ecmd;
+                if (ports[index].naf    !== undefined) delete ports[index].naf;
                 if (ports[index].d      === undefined) ports[index].d = 0;
-                if (ports[index].misc   !== undefined) delete ports[index].misc;
+                ///if (ports[index].misc   !== undefined) delete ports[index].misc;
                 if (ports[index].m      === undefined) ports[index].m = 0;
-                if (ports[index].m > 1) ports[index].m = 0;
+                if (ports[index].m != 0) {
+                    ports[index].misc = 0;
+                    ports[index].m2   = 1;
+                    ports[index].fr   = 0;
+                } else {
+                    if (ports[index].misc   !== undefined) delete ports[index].misc;
+                    if (ports[index].m2     !== undefined) delete ports[index].m2;
+                    if (ports[index].fr     !== undefined) delete ports[index].fr;
+                }
+                if (ports[index].m > 2) ports[index].m = 0;
             } else
             if (ports[index].pty == 2) {
                 if (ports[index].factor === undefined) ports[index].factor = 1;
@@ -352,9 +367,11 @@
                 if (ports[index].d != 3) {
                     ports[index].misc = 0;
                     ports[index].m    = 0;
+                    ports[index].hst  = 0;
                 } else {
                     if (ports[index].misc   === undefined) ports[index].misc = 0;
                     if (ports[index].m      === undefined) ports[index].m = 0;
+                    if (ports[index].hst    === undefined) ports[index].hst = 0;
                 }
                 if (ports[index].m > 3) ports[index].m = 0;
             } else {
@@ -368,6 +385,9 @@
                 if (ports[index].d      !== undefined) delete ports[index].d;
                 if (ports[index].misc   !== undefined) delete ports[index].misc;
                 if (ports[index].m      !== undefined) delete ports[index].m;
+                if (ports[index].hst    !== undefined) delete ports[index].hst;
+                if (ports[index].fr     !== undefined) delete ports[index].fr;
+                if (ports[index].m2     !== undefined) delete ports[index].m2;
             }
 
             showPorts();
@@ -509,7 +529,20 @@
         $('#add').button({
             icons: {primary: 'ui-icon-plusthick'}
         }).click(function () {
-            if (ports.length) {
+            if (ports.length == 36 || ports.length == 37) {
+                ports.push({
+                    pty:    2,
+                    name:   'P' + (ports.length),
+                    ecmd:   '',
+                    eth:    '',
+                    m:      0,
+                    factor: 1,
+                    offset: 0,
+
+                    role:   'state',
+                    room:   ''
+                });
+            } else {
                 ports.push({
                     pty:    0,
                     name:   ('P' + ports.length),
@@ -692,6 +725,7 @@
                     aPorts[p] = settingsPorts[p] || {};
 
                     if (aPorts[p].pn !== undefined) delete aPorts[p].pn;
+                    if (aPorts[p].pwm !== undefined) delete aPorts[p].pwm;
 
                     ports[p] = ports[p] || {};
                     if (aPorts[p].pty == 0) {
@@ -699,13 +733,14 @@
                         aPorts[p].name    = ports[p].name  || ('P' + p);
                         aPorts[p].ecmd    = aPorts[p].ecmd || '';
                         aPorts[p].eth     = aPorts[p].eth  || '';
+                        aPorts[p].naf     = aPorts[p].naf  || 0;
                         aPorts[p].m       = aPorts[p].m    || 0;
                         aPorts[p].misc    = aPorts[p].misc || 0;
                         aPorts[p].d       = aPorts[p].d    || 0;
                         // Данная галочка говорит нам, что: если сервер доступен то используется режим P&R. Если нет, то: mode P(0), act 7:2
-                        if (aPorts[p].misc) {
+                        /*if (aPorts[p].misc) {
                             aPorts[p].m = 1;
-                        }
+                        }*/
 
                         aPorts[p].long    = !!ports[p].long;
                         aPorts[p].double  = !!ports[p].double;
@@ -716,8 +751,12 @@
                         aPorts[p].name    = ports[p].name || ('P' + p);
                         aPorts[p].m       = aPorts[p].m   || 0;
                         aPorts[p].d       = aPorts[p].d   || 0;
-                        aPorts[p].pwm     = aPorts[p].pwm || 0;
-
+                        if (aPorts[p].m == 1) {
+                            ///aPorts[p].pwm     = aPorts[p].pwm  || 0;
+                            aPorts[p].fr      = aPorts[p].fr   || 0;
+                            aPorts[p].m2      = aPorts[p].m2   || 1;
+                            aPorts[p].misc    = aPorts[p].misc || 0;
+                        }
                         aPorts[p].role    = ports[p].role || 'button';
                     } else
                     if (aPorts[p].pty == 2) {
@@ -727,6 +766,8 @@
                         aPorts[p].eth     = aPorts[p].eth  || '';
                         aPorts[p].m       = aPorts[p].m    || 0;
                         aPorts[p].misc    = aPorts[p].misc || 0;
+                        aPorts[p].hst     = aPorts[p].hst  || 0;
+                        aPorts[p].naf     = aPorts[p].naf  || 0;
 
                         aPorts[p].offset  = ports[p].offset || 0;
                         aPorts[p].factor  = ports[p].factor || 1;
@@ -735,10 +776,12 @@
                     if (aPorts[p].pty == 3) {
                         // temperature - digital sensor
                         aPorts[p].name    = ports[p].name || ('P' + p);
-                        aPorts[p].m       = aPorts[p].m || (_ports[p].indexOf('hum') != -1 ? 1 : 0);
-                        aPorts[p].d       = aPorts[p].d || 0;
+                        aPorts[p].m       = aPorts[p].m   || (_ports[p].indexOf('hum') != -1 ? 1 : 0);
+                        aPorts[p].d       = aPorts[p].d   || 0;
+                        aPorts[p].hst     = aPorts[p].hst || 0;
+                        aPorts[p].naf     = aPorts[p].naf || 0;
                         aPorts[p].role    = ports[p].role || 'value.temperature';
-                        if (aPorts[p].d == 4) {   ///NAUJAS
+                        if (aPorts[p].d == 4) {
                             aPorts[p].role    = ports[p].role || 'state';
                         }
                     /*} else if (_ports[p].indexOf('temp:') != -1) {  ///NAUJAS
