@@ -60,6 +60,12 @@ adapter.on('stateChange', function (id, state) {
             }
 
             if (ports[id].common.type == 'boolean') {
+		if (id.indexOf('_A') !== -1) {                    // DS2413
+                    sendCommandToDSA(ports[id].native.port, state.val);
+                } else
+                if (id.indexOf('_B') !== -1) {                    // DS2413
+                    sendCommandToDSB(ports[id].native.port, state.val);
+                } else
                 sendCommand(ports[id].native.port, state.val);
             } else if (id.indexOf('_counter') !== -1) {
                 sendCommandToCounter(ports[id].native.port, state.val);
@@ -174,16 +180,33 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
     if (!settings.pty) {
         settings.d    = parseInt(settings.d, 10) || 0;
         settings.ecmd = settings.ecmd || '';
-        settings.eth  = '';//settings.eth  || '';
-        options.path += '&pty=0&m=' + (settings.m || 0) + '&misc=1&d=' + settings.d + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';
+        settings.eth  = settings.eth  || '';
+        ///options.path += '&pty=0&m=' + (settings.m || 0) + '&misc=1&d=' + settings.d + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';
+        options.path += '&pty=0&m=' + (settings.m || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=' + encodeURIComponent((settings.eth || '').trim());
+        if (settings.naf == 1) {
+            options.path += '&naf=1';
+        }
+        if (settings.misc == 1) {
+            options.path += '&misc=1';
+        }
+        if (settings.d == 1) {
+            options.path += '&d=' + settings.d;
+        }
     } else
     if (settings.pty == 1) {
-        settings.pwm = parseInt(settings.pwm, 10) || 0;
-        if (settings.pwm > 255) settings.pwm = 255;
-        if (settings.pwm < 0)   settings.pwm = 0;
+        ///settings.pwm = parseInt(settings.pwm, 10) || 0;
+        ///if (settings.pwm > 255) settings.pwm = 255;
+        ///if (settings.pwm < 0)   settings.pwm = 0;
+	settings.d = parseInt(settings.d, 10) || 0;
+        if (settings.d > 255) settings.d = 255;
+        if (settings.d < 0)   settings.d = 0;
 
         // digital out
-        options.path += '&pty=1&m=' + (settings.m || 0) + '&d=' + (settings.d || 0) + '&pwm=' + (settings.pwm || 0);
+        ///options.path += '&pty=1&m=' + (settings.m || 0) + '&d=' + (settings.d || 0) + '&pwm=' + (settings.pwm || 0);
+	options.path += '&pty=1&m=' + (settings.m || 0) + '&d=' + (settings.d || 0);
+        if (settings.m == 1 && settings.misc == 1) {   ///NAUJAS
+            options.path += '&misc=1' + '&m2=' + (settings.m2 || 0);
+        }
     } else
     if (settings.pty == 2) {
         // Convert misc with given factor and offset
@@ -198,20 +221,27 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
         settings.ecmd = settings.ecmd || '';
         settings.eth  = ''; //settings.eth  || '';
         ///options.path += (((port == 14 || port == 15) && settings.pty == 2) ? '' : '&pty=2') + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';         ///NAUJAS
-        options.path += '&pty=2' + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';
+        options.path += '&pty=2' + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth='' + encodeURIComponent((settings.eth || '').trim());
+        if (settings.naf == 1) {
+            options.path += '&naf=1';
+        }
     } else
     if (settings.pty == 3) {
         settings.ecmd = settings.ecmd || '';
-        settings.eth  = ''; //settings.eth  || '';
+        settings.eth  = settings.eth  || '';
         // digital sensor
         options.path += '&pty=3&d=' + (settings.d || 0);
-        if (settings.d == 3) {
-            options.path += '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';
+	if (settings.d == 3) {
+            ///options.path += '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';
+            options.path += '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&hst=' + (settings.hst || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=' + encodeURIComponent((settings.eth || '').trim());
+            if (settings.naf == 1) {
+                options.path += '&naf=1';settings.eth  = settings.eth  || '';
+            }
         }
-    } else
+    /*} else
     if (settings.pty == 4) {
         adapter.log.info('Do not configure internal temperature port ' + port);
-        return writeConfigOne(ip, pass, _settings, callback, port, errors);
+        return writeConfigOne(ip, pass, _settings, callback, port, errors);*/
     } else {
         // NC
         options.path += '&pty=255';
