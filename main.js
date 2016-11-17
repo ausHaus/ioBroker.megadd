@@ -204,7 +204,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
         // digital out
         ///options.path += '&pty=1&m=' + (settings.m || 0) + '&d=' + (settings.d || 0) + '&pwm=' + (settings.pwm || 0);
 	options.path += '&pty=1&m=' + (settings.m || 0) + '&d=' + (settings.d || 0);
-        if (settings.m == 1 && settings.misc == 1) {   ///NAUJAS
+        if (settings.m == 1 && settings.misc == 1) {
             options.path += '&misc=1' + '&m2=' + (settings.m2 || 0);
         }
     } else
@@ -219,7 +219,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
 
         // ADC
         settings.ecmd = settings.ecmd || '';
-        settings.eth  = ''; //settings.eth  || '';
+        settings.eth  = settings.eth  || '';
         ///options.path += (((port == 14 || port == 15) && settings.pty == 2) ? '' : '&pty=2') + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';         ///NAUJAS
         options.path += '&pty=2' + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth='' + encodeURIComponent((settings.eth || '').trim());
         if (settings.naf == 1) {
