@@ -235,7 +235,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
             ///options.path += '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';
             options.path += '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&hst=' + (settings.hst || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=' + encodeURIComponent((settings.eth || '').trim());
             if (settings.naf == 1) {
-                options.path += '&naf=1';settings.eth  = settings.eth  || '';
+                options.path += '&naf=1';
             }
         }
     /*} else
