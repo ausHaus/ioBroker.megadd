@@ -220,7 +220,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
         // ADC
         settings.ecmd = settings.ecmd || '';
         settings.eth  = settings.eth  || '';
-        ///options.path += (((port == 14 || port == 15) && settings.pty == 2) ? '' : '&pty=2') + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';         ///NAUJAS
+        ///options.path += (((port == 14 || port == 15) && settings.pty == 2) ? '' : '&pty=2') + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';
         options.path += '&pty=2' + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=' + encodeURIComponent((settings.eth || '').trim());
         if (settings.naf == 1) {
             options.path += '&naf=1';
@@ -1348,7 +1348,7 @@ function sendCommandToDSA(port, value) {
         port: parts[1] || 80,
         path: '/' + adapter.config.password + '/?' + data
     };
-    adapter.log.debug('Send command TEST A "' + data + '" to ' + adapter.config.ip);
+    adapter.log.debug('Send command "' + data + '" to ' + adapter.config.ip);
 
     // Set up the request
     http.get(options, function (res) {
@@ -1384,7 +1384,7 @@ function sendCommandToDSB(port, value) {
         port: parts[1] || 80,
         path: '/' + adapter.config.password + '/?' + data
     };
-    adapter.log.debug('Send command TEST B "' + data + '" to ' + adapter.config.ip);
+    adapter.log.debug('Send command "' + data + '" to ' + adapter.config.ip);
 
     // Set up the request
     http.get(options, function (res) {
@@ -1487,7 +1487,7 @@ function syncObjects() {
     if (adapter.config.ports) {
         for (var p = 0; p < adapter.config.ports.length; p++) {
             var settings = adapter.config.ports[p];
-            ///var id = (p == 14 || p == 15) ? ('a' + (p - 8)) : ('p' + p); //NAUJAS
+            ///var id = (p == 14 || p == 15) ? ('a' + (p - 8)) : ('p' + p);
             var id = (p == 37) ? ('p' + p) : ('p' + p);
 
             if (settings.name) {
