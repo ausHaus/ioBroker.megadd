@@ -248,7 +248,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
     }
 
     // If internal temperature
-    adapter.log.info('Write config for port ' + port + ': http://' + ip + options.path);
+    ///adapter.log.info('Write config for port ' + port + ': http://' + ip + options.path);
 
     http.get(options, function (res) {
         res.setEncoding('utf8');
@@ -598,16 +598,18 @@ function detectPortConfig(ip, pass, length, callback, port, result) {
                     settings.pty = parseInt(settings.pty, 10);
                 }
 
-                if (settings.pty == 1) {
+                /*if (settings.pty == 1) {
                     settings.m   = settings.m   || 0;
                     settings.pwm = settings.pwm || 0;
-                }
+                }*/
                 if (settings.m    !== undefined) settings.m    = parseInt(settings.m,    10);
                 if (settings.d    !== undefined) settings.d    = parseInt(settings.d,    10);
-                if (settings.misc !== undefined) settings.misc = parseInt(settings.misc, 10);
-                if (settings.pwm  !== undefined) settings.pwm  = parseInt(settings.pwm,  10);
+                ///if (settings.misc !== undefined) settings.misc = parseInt(settings.misc, 10);
+                ///if (settings.pwm  !== undefined) settings.pwm  = parseInt(settings.pwm,  10);
                 if (settings.pn   !== undefined) settings.pn   = parseInt(settings.pn,   10);
                 if (settings.naf  !== undefined) settings.naf  = parseInt(settings.naf,  10);
+		if (settings.fr   !== undefined) settings.fr   = parseInt(settings.fr,   10);
+                if (settings.m2   !== undefined) settings.m2   = parseInt(settings.m2,   10);
                 if (settings.ecmd === 'ð=')      settings.ecmd = '';
 
                 result[port] = settings;
@@ -862,7 +864,7 @@ function getPortsState(ip, password, callback) {
     });
 }
 
-function getInternalTemp(ip, password, callback) {
+/*function getInternalTemp(ip, password, callback) {
     //http://192.168.0.14/sec/?tget=1
     if (typeof ip == 'function') {
         callback = ip;
@@ -908,13 +910,14 @@ function getInternalTemp(ip, password, callback) {
         adapter.log.warn('Got error by request to ' + ip + ': ' + e.message);
         callback(e.message);
     });
-}
+}*/
 
 function processClick(port) {
     var config = adapter.config.ports[port];
 
     // If press_long
-    if (config.m == 1 && config.long) {
+    ///if (config.m == 1 && config.long) {
+    if ((config.m == 1 || config.misc == 1) && config.long) {	
         // Detect EDGE
         if (config.oldValue !== undefined && config.oldValue !== null && config.oldValue != config.value) {
             adapter.log.debug('new state detected on port [' + port + ']: ' + config.value);
@@ -1027,7 +1030,8 @@ function triggerShortPress(port) {
 
         detectDoubleClick(port);
     } else {
-        if (config.m != 1) {
+        ///if (config.m != 1) {
+	if (config.misc != 1) {
             // if not first read
             if (config.oldValue === undefined || config.oldValue === null) return;
             adapter.log.debug('reported new state for port ' + port + ' - true');
@@ -1118,20 +1122,32 @@ function processPortState(_port, value) {
                 }
             } else
             if (_ports[_port].pty == 1) {
-                if (_ports[_port].m) {
+                ///if (_ports[_port].m) {
+		if (_ports[_port].m == 1) {
                     //f = value * _ports[_port].factor + _ports[_port].offset;
                     value = Math.round(value * 1000) / 1000;
 
                     adapter.log.debug('detected new value on port [' + _port + ']: ' + value);
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
-                } else {
+		}
+		if (_ports[_port].m == 0) {
+                ///} else {
                     adapter.log.debug('detected new value on port [' + _port + ']: ' + (value ? true : false));
                     adapter.setState(_ports[_port].id, {val: value ? true : false, ack: true, q: q});
                 }
-            } else // internal temperature sensor
+		if (_ports[_port].m == 2) {  // DS2413
+                    adapter.log.debug('detected new value on port [' + _port + '_A' + ']: ' + (value ? true : false));
+                    adapter.setState(_ports[_port].id + '_A', {val: value ? true : false, ack: true, q: q});
+	            
+                    if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
+                        adapter.log.debug('detected new value on port [' + _port + '_B' + ']: ' + (value ? true : false));
+                        adapter.setState(_ports[_port].id + '_B', {val: secondary, ack: true, q: q});
+                    }
+                }
+            /*} else // internal temperature sensor
             if (_ports[_port].pty == 4) {
                 adapter.log.debug('detected new value on port [' + _port + ']: ' + value);
-                adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
+                adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});*/
             }
 
             _ports[_port].value    = value;
@@ -1245,7 +1261,8 @@ function restApi(req, res) {
 
         if (adapter.config.ports[_port]) {
             // If digital port
-            if (!adapter.config.ports[_port].pty && adapter.config.ports[_port].m != 1) {
+            ///if (!adapter.config.ports[_port].pty && adapter.config.ports[_port].m != 1) {
+	    if (adapter.config.ports[_port].pty == 0 && adapter.config.ports[_port].misc != 1) {
                 adapter.config.ports[_port].oldValue = adapter.config.ports[_port].value;
                 adapter.config.ports[_port].value = !adapter.config.ports[_port].m ? 1 : 0;
                 processClick(_port);
@@ -1298,13 +1315,92 @@ function sendCommand(port, value) {
             adapter.log.debug('Response "' + xmldata + '"');
             if (adapter.config.ports[port]) {
                 // Set state only if positive response from megaD
-                if (!adapter.config.ports[port].m) {
+                ///if (!adapter.config.ports[port].m) {
+		if (adapter.config.ports[port].m == 0) {
                     adapter.setState(adapter.config.ports[port].id, value ? true : false, true);
-                } else {
+                ///} else {
+                }
+                if (adapter.config.ports[port].m == 1) {
                     var f = value * adapter.config.ports[port].factor + adapter.config.ports[port].offset;
                     f = Math.round(f * 1000) / 1000;
                     adapter.setState(adapter.config.ports[port].id, f, true);
                 }
+                    var f = value * adapter.config.ports[port].factor + adapter.config.ports[port].offset;
+                    f = Math.round(f * 1000) / 1000;
+                    adapter.setState(adapter.config.ports[port].id, f, true);
+                }
+            } else {
+                adapter.log.warn('Unknown port ' + port);
+            }
+        });
+    }).on('error', function (e) {
+        adapter.log.warn('Got error by post request ' + e.toString());
+    });
+}
+
+function sendCommandToDSA(port, value) {
+    var data = 'cmd=' + port + 'A' + ':' + value;
+    
+    var parts = adapter.config.ip.split(':');
+
+    var options = {
+        host: parts[0],
+        port: parts[1] || 80,
+        path: '/' + adapter.config.password + '/?' + data
+    };
+    adapter.log.debug('Send command TEST A "' + data + '" to ' + adapter.config.ip);
+
+    // Set up the request
+    http.get(options, function (res) {
+        var xmldata = '';
+        res.setEncoding('utf8');
+        res.on('error', function (e) {
+            adapter.log.warn(e.toString());
+        });
+        res.on('data', function (chunk) {
+            xmldata += chunk;
+        });
+        res.on('end', function () {
+            adapter.log.debug('Response "' + xmldata + '"');
+            if (adapter.config.ports[port]) {
+                // Set state only if positive response from megaD
+                adapter.setState(adapter.config.ports[port].id + '_A', value ? true : false, true);
+            } else {
+                adapter.log.warn('Unknown port ' + port);
+            }
+        });
+    }).on('error', function (e) {
+        adapter.log.warn('Got error by post request ' + e.toString());
+    });
+}
+
+function sendCommandToDSB(port, value) {
+    var data = 'cmd=' + port + 'B' + ':' + value;
+    
+    var parts = adapter.config.ip.split(':');
+
+    var options = {
+        host: parts[0],
+        port: parts[1] || 80,
+        path: '/' + adapter.config.password + '/?' + data
+    };
+    adapter.log.debug('Send command TEST B "' + data + '" to ' + adapter.config.ip);
+
+    // Set up the request
+    http.get(options, function (res) {
+        var xmldata = '';
+        res.setEncoding('utf8');
+        res.on('error', function (e) {
+            adapter.log.warn(e.toString());
+        });
+        res.on('data', function (chunk) {
+            xmldata += chunk;
+        });
+        res.on('end', function () {
+            adapter.log.debug('Response "' + xmldata + '"');
+	    if (adapter.config.ports[port]) {
+                // Set state only if positive response from megaD
+                adapter.setState(adapter.config.ports[port].id + '_B', value ? true : false, true);
             } else {
                 adapter.log.warn('Unknown port ' + port);
             }
@@ -1405,9 +1501,12 @@ function syncObjects() {
             if (adapter.config.ports[p].d !== undefined) {
                 adapter.config.ports[p].d = parseInt(adapter.config.ports[p].d, 10) || 0;
             }
-            if (adapter.config.ports[p].misc !== undefined) {
+            /*if (adapter.config.ports[p].misc !== undefined) {
                 adapter.config.ports[p].misc = parseInt(adapter.config.ports[p].misc, 10) || 0;
-            }
+            }*/
+	    if (adapter.config.ports[p].misc === 'false' || adapter.config.ports[p].misc === false) adapter.config.ports[p].misc = 0;
+            if (adapter.config.ports[p].misc === 'true'  || adapter.config.ports[p].misc === true)  adapter.config.ports[p].misc = 1;
+		
             settings.port = p;
 
             var obj = {
@@ -1432,7 +1531,8 @@ function syncObjects() {
                 obj.common.type  = 'boolean';
                 if (!obj.common.role) obj.common.role = 'state';
 
-                if (settings.m == 1) {
+                ///if (settings.m == 1) {
+		if (settings.m == 1 || settings.misc == 1) {
                     if (settings.long && adapter.config.longPress) {
                         obj1 = {
                             _id: adapter.namespace + '.' + id + '_long',
@@ -1486,7 +1586,8 @@ function syncObjects() {
             } else
             // output
             if (settings.pty == 1) {
-                if (settings.m) {
+                ///if (settings.m) {
+		if (settings.m == 1) {
                     settings.factor  = parseFloat(settings.factor || 1);
                     settings.offset  = parseFloat(settings.offset || 0);
 
@@ -1498,14 +1599,54 @@ function syncObjects() {
                     obj.common.min   = 0;
                     obj.common.max   = 255;
                     if (!obj.common.role) obj.common.role = 'level';
-                    obj.native.pwm = settings.pwm;
-                } else {
+                    ///obj.native.pwm = settings.pwm;
+                } else
+		if (settings.m == 0) {
                     obj.common.write = true;
                     obj.common.read  = true;
                     obj.common.def   = false;
                     obj.common.desc  = 'P' + p + ' - digital output';
                     obj.common.type  = 'boolean';
                     if (!obj.common.role) obj.common.role = 'state';
+                } else
+		if (settings.m == 2) {   //DS2413
+                    obj = {
+                        _id: adapter.namespace + '.' + id + '_A',
+                        common: {
+                            name:  obj.common.name + '_A',
+                            role:  'button',
+                            write: true,
+                            read:  true,
+                            def:   false,
+                            desc:  'P' + p + ' - digital output A',
+                            type:  'boolean'
+                        },
+                        native: JSON.parse(JSON.stringify(settings)),
+                        type:   'state'
+                    };
+                    if (obj.native.misc !== undefined) delete obj.native.misc;
+                    if (obj.native.m2 !== undefined) delete obj.native.m2;
+                    if (obj.native.fr !== undefined) delete obj.native.fr;
+                    if (obj.native.id) obj.native.id = adapter.namespace + '.' + id + '_A';
+                    
+		    obj1 = {
+                        _id: adapter.namespace + '.' + id + '_B',
+                        common: {
+                            name:  obj.native.name + '_B',
+			    role:  'button',
+                            write: true,
+                            read:  true,
+                            def:   false,
+                            desc:  'P' + p + ' - digital output B',
+                            type:  'boolean'
+                        },
+                        native: JSON.parse(JSON.stringify(settings)),
+                        type: 'state'
+                    };
+                    if (obj1.native.misc !== undefined) delete obj1.native.misc;
+                    if (obj1.native.m2 !== undefined) delete obj1.native.m2;
+                    if (obj1.native.fr !== undefined) delete obj1.native.fr;
+                    if (obj1.native.id) obj1.native.id = adapter.namespace + '.' + id + '_B';
                 }
             } else
             // analog ADC
@@ -1563,7 +1704,7 @@ function syncObjects() {
                     obj.common.type = 'string';
                     obj.common.def  = '';
                 }
-            } else
+            /*} else
             // internal digital temperature sensor
             if (settings.pty == 4) {
                 obj.common.write = false;
@@ -1574,7 +1715,7 @@ function syncObjects() {
                 obj.common.unit  = '°C';
                 obj.common.desc  = 'P' + p + ' - temperature';
                 obj.common.type  = 'number';
-                if (!obj.common.role) obj.common.role = 'value.temperature';
+                if (!obj.common.role) obj.common.role = 'value.temperature';*/
             } else {
                 continue;
             }
