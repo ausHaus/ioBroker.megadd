@@ -221,7 +221,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
         settings.ecmd = settings.ecmd || '';
         settings.eth  = settings.eth  || '';
         ///options.path += (((port == 14 || port == 15) && settings.pty == 2) ? '' : '&pty=2') + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';         ///NAUJAS
-        options.path += '&pty=2' + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth='' + encodeURIComponent((settings.eth || '').trim());
+        options.path += '&pty=2' + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=' + encodeURIComponent((settings.eth || '').trim());
         if (settings.naf == 1) {
             options.path += '&naf=1';
         }
