@@ -221,7 +221,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
         settings.ecmd = settings.ecmd || '';
         settings.eth  = settings.eth  || '';
         ///options.path += (((port == 14 || port == 15) && settings.pty == 2) ? '' : '&pty=2') + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=';
-        options.path += '&pty=2' + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=' + encodeURIComponent((settings.eth || '').trim());
+        options.path += '&pty=2' + '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&hst=' + (settings.hst || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=' + encodeURIComponent((settings.eth || '').trim());
         if (settings.naf == 1) {
             options.path += '&naf=1';
         }
@@ -591,8 +591,8 @@ function detectPortConfig(ip, pass, length, callback, port, result) {
                         settings.pty = 0;
                     } else if (data.indexOf('>Type Out<') != -1) {
                         settings.pty = 1;
-                    } else if (data.match(/<br>A\d+\//)) {
-                        settings.pty = 2;
+                    ///} else if (data.match(/<br>A\d+\//)) {
+                        ///settings.pty = 2;
                     }
                 } else {
                     settings.pty = parseInt(settings.pty, 10);
@@ -1096,7 +1096,8 @@ function processPortState(_port, value) {
         if (value !== _ports[_port].value || _ports[_port].q != q || (secondary !== null && _ports[_port].secondary != secondary)) {
             _ports[_port].oldValue = _ports[_port].value;
 
-            if (!_ports[_port].pty) {
+            ///if (!_ports[_port].pty) {
+	    if (_ports[_port].pty == 0) {
                 if (value !== _ports[_port].value || _ports[_port].q != q) {
                     _ports[_port].value = value;
                     processClick(_port);
@@ -1321,10 +1322,6 @@ function sendCommand(port, value) {
                 ///} else {
                 }
                 if (adapter.config.ports[port].m == 1) {
-                    var f = value * adapter.config.ports[port].factor + adapter.config.ports[port].offset;
-                    f = Math.round(f * 1000) / 1000;
-                    adapter.setState(adapter.config.ports[port].id, f, true);
-                }
                     var f = value * adapter.config.ports[port].factor + adapter.config.ports[port].offset;
                     f = Math.round(f * 1000) / 1000;
                     adapter.setState(adapter.config.ports[port].id, f, true);
