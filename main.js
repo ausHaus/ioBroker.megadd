@@ -25,7 +25,7 @@ var utils  = require(__dirname + '/lib/utils'); // Get common adapter utils
 var http   = require('http');
 var server =  null;
 var ports  = {};
-var askInternalTemp = false;
+///var askInternalTemp = false;
 var connected = false;
 
 var adapter = utils.adapter('megadd');
@@ -1178,7 +1178,7 @@ function pollStatus(dev) {
             }
         }
 
-        if (data) {
+        /*if (data) {
             var _ports = data.split(';');
             var p;
             for (p = 0; p < _ports.length; p++) {
@@ -1196,7 +1196,7 @@ function pollStatus(dev) {
                     }
                 });
             }
-        }
+        }*/
     });
 }
 
@@ -1804,12 +1804,12 @@ function syncObjects() {
         }
 
         // if internal temperature desired
-        for (var po = 0; po < adapter.config.ports.length; po++) {
+        /*for (var po = 0; po < adapter.config.ports.length; po++) {
             if (adapter.config.ports[po].pty == 4) {
                 askInternalTemp = true;
                 break;
             }
-        }
+        }*/
 
         if (adapter.config.ip && adapter.config.ip != '0.0.0.0') {
             pollStatus();
