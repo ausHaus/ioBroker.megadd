@@ -26,6 +26,7 @@ var http   = require('http');
 var server =  null;
 var ports  = {};
 ///var askInternalTemp = false;
+var ask1WireTemp = false;   //1Wire
 var connected = false;
 
 var adapter = utils.adapter('megadd');
@@ -816,6 +817,55 @@ function getPortState(port, callback) {
     });
 }
 
+function getPortStateW(ip, password, port, callback) {                  // 1Wire
+    //http://192.168.1.14/sec/?pt=33&cmd=list
+    if (typeof ip == 'function') {
+        callback = ip;
+        ip = null;
+    }
+    if (typeof password == 'function') {
+        callback = password;
+        password = null;
+    }
+    password = (password === undefined || password === null) ? adapter.config.password : password;
+    ip       =  ip || adapter.config.ip;
+    
+    var parts = ip.split(':');
+
+    var options = {
+	host: parts[0],
+        port: parts[1] || 80,
+        path: '/' + password + '/?pt=' + port + '&cmd=list'
+    };
+
+    adapter.log.debug('getPortStateW http://' + options.host + options.path);
+
+    http.get(options, function (res) {
+        var xmldata = '';
+        res.on('error', function (e) {
+	    adapter.log.warn(e);
+        });
+        res.on('data', function (chunk) {
+            xmldata += chunk;
+        });
+        res.on('end', function () {
+            if (res.statusCode != 200) {
+                adapter.log.warn('Response code: ' + res.statusCode + ' - ' + xmldata);
+                if (callback) callback(xmldata);
+            } else {
+                adapter.log.debug('Response for ' + ip + "[" + port + ']: ' + xmldata);
+                // Analyse answer and updates statuses
+		//if (callback) callback(null, xmldata);
+                if (callback) callback(port, xmldata);
+            }
+
+        });
+    }).on('error', function (e) {
+        adapter.log.warn('Got error by request to ' + ip + ': ' + e.message);
+        callback(e.message);
+    });
+}    
+
 // Get state of ALL ports
 function getPortsState(ip, password, callback) {
     if (typeof ip == 'function') {
@@ -1158,6 +1208,62 @@ function processPortState(_port, value) {
     }
 }
 
+function processPortStateW(_port, value) {      //1Wire
+    var _ports = adapter.config.ports;
+    var q = 0;
+
+        if (!_ports[_port]) {
+                // No configuration found
+                adapter.log.warn('Unknown port: ' + _port);
+                return;
+        }
+
+    if (value !== null) {
+        var secondary = null;
+        var f;
+        // Value can be 30c5b8000000:27.50;32c5b8000000:28.81;31c5b8000000:27.43.......
+        if (typeof value == 'string') {
+            ///var t = value.split('/');
+            var t = value.split(';');
+            ///var m = value.match(/temp:([0-9.-]+)/);
+            var m = value.match(/30c5b8000000:([0-9.-]+)/);
+            if (m) {
+                secondary = value.match(/32c5b8000000:([0-9.]+)/);
+                if (secondary) secondary = parseFloat(secondary[1]);
+                value = m[1];
+            } else {
+                value = t[0];
+            }
+            if (t[1] !== undefined && secondary === null) { // counter
+                secondary = parseInt(t[1], 10);
+            }
+	}
+
+        // If status changed
+        if (value !== _ports[_port].value || _ports[_port].q != q || (secondary !== null && _ports[_port].secondary != secondary)) {
+            _ports[_port].oldValue = _ports[_port].value;
+
+            if (_ports[_port].pty == 3 && _ports[_port].d == 5) {
+                if (_ports[_port].value != value || _ports[_port].q != q) {
+                    adapter.setState(_ports[_port].id + '_temperature1', {val: value, ack: true, q: q});
+                }
+
+                if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
+                    adapter.setState(_ports[_port].id + '_temperature2', {val: secondary, ack: true, q: q});
+                }
+            /*} else // internal temperature sensor                                      ///SUPER
+            if (_ports[_port].pty == 3 && _ports[_port].d == 5) {
+                adapter.log.debug('detected new value on port [' + _port + ']: ' + value);
+                adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});*/
+            }
+
+            _ports[_port].value    = value;
+            _ports[_port].q        = q;
+            if (secondary !== null) _ports[_port].secondary = secondary;
+        }
+    }
+}    
+
 function pollStatus(dev) {
     /*for (var port = 0; port < adapter.config.ports.length; port++) {
         getPortState(port, processPortState);
@@ -1178,16 +1284,17 @@ function pollStatus(dev) {
             }
         }
 
-        /*if (data) {
+        if (data) {
             var _ports = data.split(';');
             var p;
             for (p = 0; p < _ports.length; p++) {
                 // process extra internal temperature later
-                if (!adapter.config.ports[p] || adapter.config.ports[p].pty == 4) continue;
+                ///if (!adapter.config.ports[p] || adapter.config.ports[p].pty == 4) continue;
+		if (!adapter.config.ports[p] || adapter.config.ports[p].pty == 3 && adapter.config.ports[p].d == 5) continue;
                 processPortState(p, _ports[p]);
             }
             // process extra internal temperature
-            if (askInternalTemp) {
+            /*if (askInternalTemp) {
                 getInternalTemp(function (err, data) {
                     for (var po = 0; po < adapter.config.ports.length; po++) {
                         if (adapter.config.ports[po] && adapter.config.ports[po].pty == 4) {
@@ -1195,8 +1302,18 @@ function pollStatus(dev) {
                         }
                     }
                 });
+            }*/
+	    // process 1Wire 
+            if (ask1WireTemp) {
+                getPortStateW(function (err, data) {
+                    for (var po = 0; po < adapter.config.ports.length; po++) {
+                        if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
+                            processPortStateW(po, data);
+                        }
+                    }
+                });
             }
-        }*/
+        }
     });
 }
 
@@ -1810,6 +1927,19 @@ function syncObjects() {
                 break;
             }
         }*/
+	    
+	// if 1Wire
+	for (var po = 0; po < adapter.config.ports.length; po++) {
+            if (adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
+                ask1WireTemp = true;
+                break;
+            }
+        }
+
+        if (adapter.config.ip && adapter.config.ip != '0.0.0.0') {
+            pollStatus();
+            setInterval(pollStatus, adapter.config.pollInterval * 1000);
+        }
 
         if (adapter.config.ip && adapter.config.ip != '0.0.0.0') {
             pollStatus();
