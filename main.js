@@ -4,7 +4,7 @@
  *      Lets control the MegaD-2561 over ethernet (http://www.ab-log.ru/smart-house/ethernet/megad-2561)
  *
  *
- *      The device has 14 ports, 0-7 inputs and 8-13 outputs.
+ *      The device has 38 ports inputs/outputs and DSen.
  *      To read the state of the port call
  *      http://mega_ip/sec/?pt=4&cmd=get , where sec is password (max 3 chars), 4 is port number
  *      The result will come as "ON", "OFF" or analog value for analog ports
@@ -1817,7 +1817,71 @@ function syncObjects() {
                     obj.common.desc = 'P' + p + ' - iButton';
                     obj.common.type = 'string';
                     obj.common.def  = '';
-                }
+		} else if (settings.d == 5) { // 1Wire
+		    obj = {
+                        _id: adapter.namespace + '.' + id + '_temperature1',
+                        common: {
+                            name: obj.common.name + '_temperature',
+                            role: 'value.temperature',
+                            write: false,
+                            read: true,
+                            unit: '°C',
+                            def: 0,
+                            min: -30,
+                            max: 30,
+                            desc: 'P' + p + ' - temperature',
+                            type: 'number'
+                        },
+                        ////native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                        port: p
+                        ///name: 'P' + p
+                        },
+                        type:   'state'
+                    };
+                    obj1 = {
+                        _id: adapter.namespace + '.' + id + '_temperature2',
+                        common: {
+                            name: obj.native.name + '_temperature',
+                            role: 'value.temperature',
+                            write: false,
+                            read: true,
+                            unit: '°C',
+                            def: 0,
+                            min: -30,
+                            max: 30,
+                            desc: 'P' + p + ' - temperature',
+                            type: 'number'
+                        },
+                        ////native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                        port: p
+                        ////name: 'P' + p
+			},
+                        type: 'state'
+                    };
+                    obj2 = {
+                        _id: adapter.namespace + '.' + id + '_temperature3',
+                        common: {
+                            name: obj.native.name + '_temperature',
+                            role: 'value.temperature',
+                            write: false,
+                            read: true,
+                            unit: '°C',
+                            def: 0,
+                            min: -30,
+                            max: 30,
+                            desc: 'P' + p + ' - temperature',
+                            type: 'number'
+                        },
+                        ////native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                        port: p
+                        ////name: 'P' + p
+                        },
+                        type: 'state'
+		    };
+                }    
             /*} else
             // internal digital temperature sensor
             if (settings.pty == 4) {
