@@ -1821,7 +1821,7 @@ function syncObjects() {
 		    obj = {
                         _id: adapter.namespace + '.' + id + '_temperature1',
                         common: {
-                            name: obj.common.name + '_temperature',
+                            name: obj.common.name + '_temperature1',
                             role: 'value.temperature',
                             write: false,
                             read: true,
@@ -1834,15 +1834,15 @@ function syncObjects() {
                         },
                         ////native: JSON.parse(JSON.stringify(settings)),
                         native: {
-                        port: p
-                        ///name: 'P' + p
+                        port: p,
+                        name: 'P' + p
                         },
                         type:   'state'
                     };
                     obj1 = {
                         _id: adapter.namespace + '.' + id + '_temperature2',
                         common: {
-                            name: obj.native.name + '_temperature',
+                            name: obj.native.name + '_temperature2',
                             role: 'value.temperature',
                             write: false,
                             read: true,
@@ -1855,8 +1855,8 @@ function syncObjects() {
                         },
                         ////native: JSON.parse(JSON.stringify(settings)),
                         native: {
-                        port: p
-                        ////name: 'P' + p
+                        port: p,
+                        name: 'P' + p
 			},
                         type: 'state'
                     };
@@ -1876,8 +1876,8 @@ function syncObjects() {
                         },
                         ////native: JSON.parse(JSON.stringify(settings)),
                         native: {
-                        port: p
-                        ////name: 'P' + p
+                        port: p,
+                        name: 'P' + p
                         },
                         type: 'state'
 		    };
