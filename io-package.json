@@ -9,7 +9,7 @@
                 "ru":               "initial commit"
             }
         },
-        "title":                    "Mega-D Adapter",
+        "title":                    "MegaD-2561 Adapter",
         "desc":                     {
             "en": "Lets control the MegaD-2561 over ethernet/internet (http://www.ab-log.ru/smart-house/ethernet/megad-2561)",
             "de": "Ermöglicht die steuerung von MegaD-2561 über Ethernet/Internet (http://www.ab-log.ru/smart-house/ethernet/megad-2561)",
@@ -25,7 +25,7 @@
         "icon":                     "megad.png",
         "messagebox":               true,
         "readme":                   "https://github.com/ausHaus/ioBroker.megadd/blob/master/README.md",
-        "keywords":                 ["Mega-D", "communication"],
+        "keywords":                 ["MegaD-2561", "communication"],
 		"enabled":                  true,
         "extIcon":                  "https://raw.githubusercontent.com/ausHaus/ioBroker.megadd/master/admin/megad.png",
         "type":                     "hardware",
