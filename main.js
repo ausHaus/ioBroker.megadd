@@ -1751,7 +1751,7 @@ function syncObjects() {
                     if (obj.native.misc !== undefined) delete obj.native.misc;
                     if (obj.native.m2 !== undefined) delete obj.native.m2;
                     if (obj.native.fr !== undefined) delete obj.native.fr;
-                    if (obj.native.id) obj.native.id = adapter.namespace + '.' + id + '_A';
+                    ////if (obj.native.id) obj.native.id = adapter.namespace + '.' + id + '_A';
                     
 		    obj1 = {
                         _id: adapter.namespace + '.' + id + '_B',
@@ -1770,7 +1770,7 @@ function syncObjects() {
                     if (obj1.native.misc !== undefined) delete obj1.native.misc;
                     if (obj1.native.m2 !== undefined) delete obj1.native.m2;
                     if (obj1.native.fr !== undefined) delete obj1.native.fr;
-                    if (obj1.native.id) obj1.native.id = adapter.namespace + '.' + id + '_B';
+                    ////if (obj1.native.id) obj1.native.id = adapter.namespace + '.' + id + '_B';
                 }
             } else
             // analog ADC
