@@ -16,7 +16,7 @@
             "ru": "Позволяет управлять MegaD-2561 через ethernet/интернет (http://www.ab-log.ru/smart-house/ethernet/megad-2561)"
         },
         "authors": [
-            "bluefox <bluefox@ccu.io>"
+            "ausHaus <teshaus@gmail.com>"
         ],
         "license":                  "MIT",
         "platform":                 "Javascript/Node.js",
