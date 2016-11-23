@@ -62,7 +62,7 @@ MegaValue = (ioBrokerValue - offset) / factor;
 
 To get the range of the analog value from 100 to 500 set the factor as 400 and offset = 100.
 
-**The order of the ports is very important. The port in first row will be associated with P0 in MegaD-328. In row number 14 with P13.**
+**The order of the ports is very important. The port in first row will be associated with P0 in MegaD-2561. In row number 14 with P13.**
 
 -------------------
 ## Русский        
@@ -111,10 +111,13 @@ ioBrokerЗначение = MegaЗначение * Множитель + Сдви�
 
 Только аналоговые порты принимают во внимание Множитель и Сдвиг.
 
-**Порядок портов очень важен. Порт в первой колонке таблицы ассоциируется с портом P0 на MegaD-328. Порт в колонке 14 с P13.**          
+**Порядок портов очень важен. Порт в первой колонке таблицы ассоциируется с портом P0 на MegaD-2561. Порт в колонке 14 с P13.**          
          
           
 ## Changelog
+### 0.1.2 (2016-11-23)
+* (ausHaus) add DS2413 out A/B
+
 ### 0.1.0 (2016-11-01)
 * (ausHaus) initial commit
 
