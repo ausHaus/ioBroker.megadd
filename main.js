@@ -1135,7 +1135,7 @@ function processPortState(_port, value) {
                 secondary = 1;
             } else if (t[1] == 'NA') {
                 secondary = 0;
-                q = 0x82; // sensor not connected
+                q = 0x82; // DS2413 not connected
             }
 
             if (value == 'OFF') {
@@ -1197,8 +1197,8 @@ function processPortState(_port, value) {
                 }
 		if (_ports[_port].m == 2) {  // DS2413
 		    if (value !== _ports[_port].value || _ports[_port].q != q) {
-                    adapter.log.debug('detected new value on port [' + _port + '_A' + ']: ' + (value ? true : false));
-                    adapter.setState(_ports[_port].id + '_A', {val: value ? true : false, ack: true, q: q});
+                        adapter.log.debug('detected new value on port [' + _port + '_A' + ']: ' + (value ? true : false));
+                        adapter.setState(_ports[_port].id + '_A', {val: value ? true : false, ack: true, q: q});
 		    }
                     if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
                         adapter.log.debug('detected new value on port [' + _port + '_B' + ']: ' + (secondary ? true : false));
