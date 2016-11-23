@@ -4,7 +4,7 @@
  *      Lets control the MegaD-2561 over ethernet (http://www.ab-log.ru/smart-house/ethernet/megad-2561)
  *
  *
- *      The device has 38 ports inputs/outputs and DSen.
+ *      The device has 36 ports inputs/outputs and DSen, I2C, 1Wire bus.
  *      To read the state of the port call
  *      http://mega_ip/sec/?pt=4&cmd=get , where sec is password (max 3 chars), 4 is port number
  *      The result will come as "ON", "OFF" or analog value for analog ports
@@ -1113,7 +1113,7 @@ function processPortState(_port, value) {
     if (value !== null) {
         var secondary = null;
         var f;
-        // Value can be OFF/5 or 27/0 or 27 or ON
+        // Value can be OFF/5 or 27/0 or 27 or ON  or DS2413 ON/OFF 
         if (typeof value == 'string') {
             var t = value.split('/');
             var m = value.match(/temp:([0-9.-]+)/);
@@ -1127,6 +1127,15 @@ function processPortState(_port, value) {
 
             if (t[1] !== undefined && secondary === null) { // counter
                 secondary = parseInt(t[1], 10);
+            }
+	    if (t[1] == 'OFF') {  // DS2413
+                secondary = 0;
+            } else
+            if (t[1] == 'ON') {
+                secondary = 1;
+            } else if (t[1] == 'NA') {
+                secondary = 0;
+                q = 0x82; // sensor not connected
             }
 
             if (value == 'OFF') {
@@ -1187,12 +1196,13 @@ function processPortState(_port, value) {
                     adapter.setState(_ports[_port].id, {val: value ? true : false, ack: true, q: q});
                 }
 		if (_ports[_port].m == 2) {  // DS2413
+		    if (value !== _ports[_port].value || _ports[_port].q != q) {
                     adapter.log.debug('detected new value on port [' + _port + '_A' + ']: ' + (value ? true : false));
                     adapter.setState(_ports[_port].id + '_A', {val: value ? true : false, ack: true, q: q});
-	            
+		    }
                     if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
-                        adapter.log.debug('detected new value on port [' + _port + '_B' + ']: ' + (value ? true : false));
-                        adapter.setState(_ports[_port].id + '_B', {val: secondary, ack: true, q: q});
+                        adapter.log.debug('detected new value on port [' + _port + '_B' + ']: ' + (secondary ? true : false));
+                        adapter.setState(_ports[_port].id + '_B', {val: secondary ? true : false, ack: true, q: q});
                     }
                 }
             /*} else // internal temperature sensor
