@@ -24,13 +24,11 @@ For digital ports only 0, 1 and 2 (toggle) are allowed, for analog ports the val
 The device can report the changes of ports to some web server in form
 ```http://ioBroker:80/?pt=6```  , where 6 is the port number
 
-MegaD-2561 cannot report on other port than 80.
-
 ### Configuration
 
 - IP: IP address of MegaD-2561;
 - MegaD-2561 Name: Name of the MegaD-2561 to assign the port changes, e.g. "DevA". If no name set the adapter instance will be used for that;
-- Port: Listening port on ioBroker. MegaD-2561 cannot send to ports other than 80. Default value: 80. 
+- Port: Listening port on ioBroker. Default value: 80. 
 - Poll interval: poll interval in seconds. All configured input ports will be polled in defined interval;
 - Password: password to access the device (max 3 characters). Default value "sec";
 
