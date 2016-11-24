@@ -1462,7 +1462,8 @@ function sendCommand(port, value) {
     });
 }
 
-function sendCommandToDSA(port, value) {
+function sendCommandToDSA(port, value) {          //DS2413 port A
+    //http://192.168.1.14/sec/?cmd=7A:0 or &cmd=7A:1
     var data = 'cmd=' + port + 'A' + ':' + value;
     
     var parts = adapter.config.ip.split(':');
@@ -1498,7 +1499,8 @@ function sendCommandToDSA(port, value) {
     });
 }
 
-function sendCommandToDSB(port, value) {
+function sendCommandToDSB(port, value) {          //DS2413 port B
+    //http://192.168.1.14/sec/?cmd=7A:0 or &cmd=7A:1
     var data = 'cmd=' + port + 'B' + ':' + value;
     
     var parts = adapter.config.ip.split(':');
