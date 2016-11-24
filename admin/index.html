@@ -298,7 +298,8 @@
             ports[index][attr] = $(this).val();
         }
 
-        if (attr == 'm' || attr == 'pty' || attr == 'd') {
+        ///if (attr == 'm' || attr == 'pty' || attr == 'd') {
+        if (attr == 'm' || attr == 'pty' || (ports[index].pty == 3 && attr == 'd')) {
             // if input
             if (ports[index].pty == 0) {
                 // m: 0 - on close, 1 - on change, 2 - on open
