@@ -1176,7 +1176,14 @@ function processPortState(_port, value) {
                 if (_ports[_port].value != value || _ports[_port].q != q) {
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
                 }
-
+                if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
+                    adapter.setState(_ports[_port].id + '_humidity', {val: secondary, ack: true, q: q});
+                }
+            } else
+            if (_ports[_port].pty == 4) { //NEW
+                if (_ports[_port].value != value || _ports[_port].q != q) {
+                    adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
+                }
                 if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
                     adapter.setState(_ports[_port].id + '_humidity', {val: secondary, ack: true, q: q});
                 }
@@ -1906,6 +1913,47 @@ function syncObjects() {
                 obj.common.desc  = 'P' + p + ' - temperature';
                 obj.common.type  = 'number';
                 if (!obj.common.role) obj.common.role = 'value.temperature';*/
+	    } else
+            // I2C sensor  //NEW
+            if (settings.pty == 4) {
+                obj.common.write = false;
+                obj.common.read  = true;
+                obj.common.def   = 0;
+                obj.common.type  = 'number';
+                if (settings.d == 1) {
+                    obj.common.min = -30;
+                    obj.common.max = 30;
+                    obj.common.unit = '°C';
+                    obj.common.desc = 'P' + p + ' - temperature';
+                    obj.common.type = 'number';
+                    if (!obj.common.role) obj.common.role = 'value.temperature';
+		    if (settings.d == 1) {
+                        obj1 = {
+                            _id: adapter.namespace + '.' + id + '_humidity',
+                            common: {
+                                name: obj.common.name + '_humidity',
+                                role: 'value.humidity',
+                                write: false,
+                                read: true,
+                                unit: '%',
+                                def: 0,
+                                min: 0,
+                                max: 100,
+                                desc: 'P' + p + ' - humidity',
+				type: 'number'
+                            },
+                            native: {
+                                port: p
+                            },
+                            type: 'state'
+                        };
+                    }
+                } else if (settings.d == 2 || settings.d == 3) { // Light Sensors
+                    obj.common.desc = 'P' + p + ' - light';
+                    obj.common.type = 'number';
+                    obj.common.def  = 0;
+                    obj.common.role = 'value';
+                }
             } else {
                 continue;
             }
