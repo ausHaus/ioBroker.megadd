@@ -837,12 +837,15 @@
                         aPorts[p].name    = ports[p].name || ('P' + p);
                         aPorts[p].m       = aPorts[p].m   || 0;
                         if (aPorts[p].m == 1) {
+                            if (aPorts[p].d == 0) {
+                                aPorts[p].role    = ports[p].role || 'state';
+                            }
                             if (aPorts[p].d == 1) {
                                 aPorts[p].d       = aPorts[p].d    || (_ports[p].indexOf('hum') != -1 ? 1 : 0);
                                 aPorts[p].misc    = aPorts[p].misc || 0;
                                 //aPorts[p].d       = aPorts[p].d    || 0;
+                                aPorts[p].role    = ports[p].role || 'value.temperature';
                             }
-                            aPorts[p].role    = ports[p].role || 'value.temperature';
                             if (aPorts[p].d == 2 || aPorts[p].d == 3) {
                                 aPorts[p].role    = ports[p].role || 'value';
                             }
