@@ -54,6 +54,7 @@
         "Output":               {"en": "Output",                "de": "Output",                     "ru": "Циф. выход"},
         "ADC":                  {"en": "Analog in (ADC)",       "de": "Analog in (ADC)",            "ru": "Ан. вход (ADC)"},
         "Digital Sensor":       {"en": "Digital Sensor",        "de": "Digital Sensor",             "ru": "Циф. датчик"},
+        "I2C Bus":              {"en": "I2C Bus",               "de": "I2C Bus",                    "ru": "Шина I2C"},
         "normal opened":        {"en": "normal opened",         "de": "bei schliessen",             "ru": "при замыкании"},
         "on change":            {"en": "on change",             "de": "auf änderung",               "ru": "при изменении"},
         "normal closed":        {"en": "normal closed",         "de": "bei auf",                    "ru": "при размыкании"},
@@ -61,6 +62,7 @@
         "Net:":                 {"en": "Net:",                  "de": "Net:",                       "ru": "Сетевой сценарий:"},
         "Long:":                {"en": "Long:",                 "de": "Lang-Click:",                "ru": "Долгое нажатие:"},
         "Double:":              {"en": "Double:",               "de": "Double-Click:",              "ru": "Двойное нажатие:"},
+        "SCL:":                 {"en": "SCL port:",             "de": "SCL port:",                  "ru": "SCL порт:"},
         "not monitored":        {"en": "not monitored",         "de": "nicht beobachtet",           "ru": "не наблюдать"},
         "> threshold":          {"en": "> threshold",           "de": "> Schwellwert",              "ru": "> порога"},
         "< threshold":          {"en": "< threshold",           "de": "< Schwellwert",              "ru": "< порога"},
@@ -71,6 +73,13 @@
         "DHT22":                {"en": "DHT22",                 "de": "DHT22",                      "ru": "DHT22"},
         "PWM":                  {"en": "PWM",                   "de": "PWM",                        "ru": "ШИМ"},
         "DS2413":               {"en": "DS2413",                "de": "DS2413",                     "ru": "DS2413"},
+        "HTU21D":               {"en": "HTU21D",                "de": "HTU21D",                     "ru": "HTU21D"},
+        "BH1750":               {"en": "BH1750",                "de": "BH1750",                     "ru": "BH1750"},
+        "TSL2591":              {"en": "TSL2591",               "de": "TSL2591",                    "ru": "TSL2591"},
+        "Unk":                  {"en": "Unknown",               "de": "Unbekannt",                  "ru": "Неизвестный"},
+        "Scan":                 {"en": "Skan",                  "de": "Scan",                       "ru": "Поиск"},
+        "SDA":                  {"en": "SDA",                   "de": "SDA",                        "ru": "SDA"},
+        "SCL":                  {"en": "SCL",                   "de": "SCL",                        "ru": "SCL"},
         "Frequency:":           {"en": "Frequency:",            "de": "Frequenz:",                  "ru": "Частота:"},
         "Default state:":       {"en": "Default state:",        "de": "Default Zustand:",           "ru": "По умолчанию:"},
         "off":                  {"en": "off",                   "de": "off",                        "ru": "выкл"},
@@ -106,6 +115,7 @@
         "Find devices":         {"en": "Find devices",          "de": "Suche Geräte",               "ru": "Искать устройства"},
         "PWM:":                 {"en": "PWM:",                  "de": "PWM:",                       "ru": "PWM:"},
         "Sensor type:":         {"en": "Sensor type:",          "de": "Sensortyp:",                 "ru": "Тип сенсора:"},
+        "Dev:":                 {"en": "Sensor type:",          "de": "Sensortyp:",                 "ru": "Тип сенсора:"},
         "De-bounce:":           {"en": "De-bounce:",            "de": "Entprellen:",                "ru": "Дребезг:"}
     };
     var onchange = null;
@@ -143,6 +153,7 @@
             text += '<option value="2" '   + ((portSettings.pty == 2)   ? 'selected' : '') + '>' + _('ADC')         + '</option>';
         }
         text += '<option value="3" '   + ((portSettings.pty == 3)   ? 'selected' : '') + '>' + _('Digital Sensor')  + '</option>';
+        text += '<option value="4" '   + ((portSettings.pty == 4)   ? 'selected' : '') + '>' + _('I2C Bus')  + '</option>';
         '</td>';
 
         // mode
@@ -167,7 +178,6 @@
                     'DS2413'
                 ];
             }
-
         } else if (portSettings.pty == 2 || (portSettings.pty == 3 && portSettings.d == 3)) {
             modes = [
                 'not monitored',
@@ -175,6 +185,12 @@
                 '< threshold',
                 '<> threshold'
             ];
+        } else if (portSettings.pty == 4) {
+            modes = [
+                'NC',
+                'SDA',
+                'SCL'
+            ];   
         }
         if (modes) {
             text += '<td class="tspace"><select class="tvalue" data-type="m" data-port="' + index + '">';
@@ -276,6 +292,18 @@
             text += _('Factor:') + ' <input class="tvalue" data-type="factor" type="text" data-port="' + index + '" style="width: 30px" value="' + (portSettings.factor || 1) + '"/>';
         }
 
+        //I2C
+        if (portSettings.pty == 4 && portSettings.m == 1) {
+            text += _('SCL:') + ' <input class="tvalue" data-type="misc" type="text" style="width: 70px" data-port="' + index + '" value="' + (portSettings.misc || 0) + '" maxsize="3"/>';
+            text += ', ' + _('Dev:') + ' <select class="tvalue" data-type="d" data-port="' + index + '">';
+            text += '<option value="0" ' + ((portSettings.d == 0) ? 'selected' : '') + '>' + _('Unk') + '</option>';
+            text += '<option value="1" ' + ((portSettings.d == 1) ? 'selected' : '') + '>' + _('HTU21D') + '</option>';
+            text += '<option value="2" ' + ((portSettings.d == 2) ? 'selected' : '') + '>' + _('BH1750') + '</option>';
+            text += '<option value="3" ' + ((portSettings.d == 3) ? 'selected' : '') + '>' + _('TSL2591') + '</option>';
+            text += '<option value="99" ' + ((portSettings.d == 99) ? 'selected' : '') + '>' + _('Scan') + '</option>';
+            text += '</select>';
+        }
+        
         if (portSettings.pty == 0) {
             if (portSettings.m == 1) {
                 text += ', ' + _('Long:')   + ' <input type="checkbox" class="tvalue" data-type="long" data-port="' + index + '" ' + (portSettings.long   ? 'checked' : '') + '/>';
@@ -375,6 +403,19 @@
                     if (ports[index].hst    === undefined) ports[index].hst = 0;
                 }
                 if (ports[index].m > 3) ports[index].m = 0;
+            } else
+            if (ports[index].pty == 4) {
+                if (ports[index].factor !== undefined) delete ports[index].factor;
+                if (ports[index].offset !== undefined) delete ports[index].offset;
+                if (ports[index].long   !== undefined) delete ports[index].long;
+                if (ports[index].double !== undefined) delete ports[index].double;
+
+                if (ports[index].eth    !== undefined) delete ports[index].eth;
+                if (ports[index].ecmd   !== undefined) delete ports[index].ecmd;
+                if (ports[index].naf    !== undefined) delete ports[index].naf;
+                if (ports[index].m      === undefined) ports[index].m = 0;
+                if (ports[index].misc   === undefined) ports[index].misc = 0;
+                if (ports[index].d      === undefined) ports[index].d = 0;
             } else {
                 if (ports[index].factor !== undefined) delete ports[index].factor;
                 if (ports[index].offset !== undefined) delete ports[index].offset;
@@ -790,6 +831,25 @@
                         aPorts[p].pty     = 4;
                         aPorts[p].name    = ports[p].name || ('P' + p);
                         aPorts[p].role    = ports[p].role || 'value.temperature';*/
+                    } else
+                    if (aPorts[p].pty == 4) {
+                        // I2C sensor
+                        aPorts[p].name    = ports[p].name || ('P' + p);
+                        aPorts[p].m       = aPorts[p].m   || 0;
+                        if (aPorts[p].m == 1) {
+                            if (aPorts[p].d == 1) {
+                                aPorts[p].d       = aPorts[p].d    || (_ports[p].indexOf('hum') != -1 ? 1 : 0);
+                                aPorts[p].misc    = aPorts[p].misc || 0;
+                                //aPorts[p].d       = aPorts[p].d    || 0;
+                            }
+                            aPorts[p].role    = ports[p].role || 'value.temperature';
+                            if (aPorts[p].d == 2 || aPorts[p].d == 3) {
+                                aPorts[p].role    = ports[p].role || 'value';
+                            }
+                        }
+                        if (aPorts[p].m == 2) {
+                            aPorts[p].role    = ports[p].role || 'state';
+                        }
                     } else {
                         // unknown settings
                         aPorts[p].pty     = 255;
