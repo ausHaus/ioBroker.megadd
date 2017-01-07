@@ -292,7 +292,7 @@
             text += _('Factor:') + ' <input class="tvalue" data-type="factor" type="text" data-port="' + index + '" style="width: 30px" value="' + (portSettings.factor || 1) + '"/>';
         }
 
-        //I2C
+        //I2C Bus
         if (portSettings.pty == 4 && portSettings.m == 1) {
             text += _('SCL:') + ' <input class="tvalue" data-type="misc" type="text" style="width: 70px" data-port="' + index + '" value="' + (portSettings.misc || 0) + '" maxsize="3"/>';
             text += ', ' + _('Dev:') + ' <select class="tvalue" data-type="d" data-port="' + index + '">';
@@ -300,7 +300,6 @@
             text += '<option value="1" ' + ((portSettings.d == 1) ? 'selected' : '') + '>' + _('HTU21D') + '</option>';
             text += '<option value="2" ' + ((portSettings.d == 2) ? 'selected' : '') + '>' + _('BH1750') + '</option>';
             text += '<option value="3" ' + ((portSettings.d == 3) ? 'selected' : '') + '>' + _('TSL2591') + '</option>';
-            text += '<option value="99" ' + ((portSettings.d == 99) ? 'selected' : '') + '>' + _('Scan') + '</option>';
             text += '</select>';
         }
         
