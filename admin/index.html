@@ -58,11 +58,13 @@
         "normal opened":        {"en": "normal opened",         "de": "bei schliessen",             "ru": "при замыкании"},
         "on change":            {"en": "on change",             "de": "auf änderung",               "ru": "при изменении"},
         "normal closed":        {"en": "normal closed",         "de": "bei auf",                    "ru": "при размыкании"},
+        "click mode":           {"en": "click mode",            "de": "presse modus",               "ru": "режим нажатия"},
         "Action:":              {"en": "Action:",               "de": "Aktion:",                    "ru": "Сценарий:"},
         "Net:":                 {"en": "Net:",                  "de": "Net:",                       "ru": "Сетевой сценарий:"},
         "Long:":                {"en": "Long:",                 "de": "Lang-Click:",                "ru": "Долгое нажатие:"},
         "Double:":              {"en": "Double:",               "de": "Double-Click:",              "ru": "Двойное нажатие:"},
         "SCL:":                 {"en": "SCL port:",             "de": "SCL port:",                  "ru": "SCL порт:"},
+        "Disp:":                {"en": "Display port:",         "de": "Anzeigen port:",             "ru": "Дисплей порт:"},
         "not monitored":        {"en": "not monitored",         "de": "nicht beobachtet",           "ru": "не наблюдать"},
         "> threshold":          {"en": "> threshold",           "de": "> Schwellwert",              "ru": "> порога"},
         "< threshold":          {"en": "< threshold",           "de": "< Schwellwert",              "ru": "< порога"},
@@ -76,8 +78,10 @@
         "HTU21D":               {"en": "HTU21D",                "de": "HTU21D",                     "ru": "HTU21D"},
         "BH1750":               {"en": "BH1750",                "de": "BH1750",                     "ru": "BH1750"},
         "TSL2591":              {"en": "TSL2591",               "de": "TSL2591",                    "ru": "TSL2591"},
-        "Unk":                  {"en": "Unknown",               "de": "Unbekannt",                  "ru": "Неизвестный"},
-        "Scan":                 {"en": "Skan",                  "de": "Scan",                       "ru": "Поиск"},
+        "SSD1306":              {"en": "SSD1306",               "de": "SSD1306",                    "ru": "SSD1306"},
+        "MCP23008":             {"en": "MCP23008",              "de": "MCP23008",                   "ru": "MCP23008"},
+        "ANY":                  {"en": "Any",                   "de": " Alle",                      "ru": "Любой"},
+        "Scan":                 {"en": "Scan",                  "de": "Scan",                       "ru": "Поиск"},
         "SDA":                  {"en": "SDA",                   "de": "SDA",                        "ru": "SDA"},
         "SCL":                  {"en": "SCL",                   "de": "SCL",                        "ru": "SCL"},
         "Frequency:":           {"en": "Frequency:",            "de": "Frequenz:",                  "ru": "Частота:"},
@@ -113,6 +117,7 @@
         "Cancel":               {"en": "Cancel",                "de": "Abrechen",                   "ru": "Отмена"},
         "Error":                {"en": "Error",                 "de": "Fehler",                     "ru": "Ошибка"},
         "Find devices":         {"en": "Find devices",          "de": "Suche Geräte",               "ru": "Искать устройства"},
+        "Nothing found":        {"en": "Nothing found",         "de": "Nichts gefunden",            "ru": "Ничего не найдено"},
         "PWM:":                 {"en": "PWM:",                  "de": "PWM:",                       "ru": "PWM:"},
         "Sensor type:":         {"en": "Sensor type:",          "de": "Sensortyp:",                 "ru": "Тип сенсора:"},
         "Dev:":                 {"en": "Sensor type:",          "de": "Sensortyp:",                 "ru": "Тип сенсора:"},
@@ -162,7 +167,8 @@
             modes = [
                 'normal opened',
                 'on change',
-                'normal closed'
+                'normal closed',
+                'click mode'
             ];
         } else if (portSettings.pty == 1) {
             if (index == 10 || index == 11 || index == 12 || index == 13 || index == 25  || index == 27  || index == 28) {
@@ -300,6 +306,7 @@
             text += '<option value="1" ' + ((portSettings.d == 1) ? 'selected' : '') + '>' + _('HTU21D') + '</option>';
             text += '<option value="2" ' + ((portSettings.d == 2) ? 'selected' : '') + '>' + _('BH1750') + '</option>';
             text += '<option value="3" ' + ((portSettings.d == 3) ? 'selected' : '') + '>' + _('TSL2591') + '</option>';
+            text += '<option value="20" ' + ((portSettings.d == 20) ? 'selected' : '') + '>' + _('MCP23008') + '</option>';
             text += '</select>';
         }
         
@@ -309,8 +316,13 @@
             }
             text += ', ' + _('Double:') + ' <input type="checkbox" class="tvalue" data-type="double" data-port="' + index + '" ' + (portSettings.double ? 'checked' : '') + '/>';
         }
+        
+        // Displei
+        if (portSettings.pty != 255) {
+            text += ', ' + _('Disp:') + ' <input class="tvalue" data-type="disp" type="text" style="width: 30px" data-port="' + index + '" value="' + (portSettings.disp || '') + '" maxsize="2"/>';
+        }
         text += '</td>';
-
+        
         text += '</tr>';
         return text;
     }
@@ -344,7 +356,7 @@
                 if (ports[index].d      === undefined) ports[index].d = 0;
                 if (ports[index].misc   === undefined) ports[index].misc = 0;
                 if (ports[index].m      === undefined) ports[index].m = 0;
-                if (ports[index].m > 2) ports[index].m = 0;
+                if (ports[index].m > 3) ports[index].m = 0;
 
                 if (ports[index].m != 1) ports[index].long = false;
             } else
