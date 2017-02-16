@@ -80,7 +80,7 @@
         "TSL2591":              {"en": "TSL2591",               "de": "TSL2591",                    "ru": "TSL2591"},
         "SSD1306":              {"en": "SSD1306",               "de": "SSD1306",                    "ru": "SSD1306"},
         "MCP23008":             {"en": "MCP23008",              "de": "MCP23008",                   "ru": "MCP23008"},
-        "ANY":                  {"en": "Any",                   "de": " Alle",                      "ru": "Любой"},
+        "ANY":                  {"en": "Any",                   "de": "Alle",                       "ru": "Любой"},
         "Scan":                 {"en": "Scan",                  "de": "Scan",                       "ru": "Поиск"},
         "SDA":                  {"en": "SDA",                   "de": "SDA",                        "ru": "SDA"},
         "SCL":                  {"en": "SCL",                   "de": "SCL",                        "ru": "SCL"},
@@ -94,6 +94,7 @@
         "Threshold:":           {"en": "Threshold:",            "de": "Schwellwert:",               "ru": "Порог:"},
         "Hysteresis:":          {"en": "Hysteresis:",           "de": "Hysterese:",                 "ru": "Гистерезис:"},
         "Smooth:":              {"en": "Smooth:",               "de": "Glatt:",                     "ru": "Плавный:"},
+        "Misc:":                {"en": "Misc:",                 "de": "Misc:",                      "ru": "Misc:"},
         "Change ip or password": {
             "en": "Change ip or password",
             "de": "IP Adresse oder Kennwort ändern",
@@ -117,6 +118,11 @@
         "Cancel":               {"en": "Cancel",                "de": "Abrechen",                   "ru": "Отмена"},
         "Error":                {"en": "Error",                 "de": "Fehler",                     "ru": "Ошибка"},
         "Find devices":         {"en": "Find devices",          "de": "Suche Geräte",               "ru": "Искать устройства"},
+        "Enable adapter first": {
+            "en": "Enable adapter first",
+            "de": "Aktivieren sie zuerst den adapter",
+            "ru": "Сперва включите адаптер"
+        },
         "Nothing found":        {"en": "Nothing found",         "de": "Nichts gefunden",            "ru": "Ничего не найдено"},
         "Information will be merged. Are you sure?": {
             "en": "Information will be merged. Are you sure?",
@@ -280,7 +286,7 @@
         if (portSettings.pty == 1 && portSettings.m == 1 && (index == 10 || index == 11 || index == 12 || index == 13 || index == 25  || index == 27  || index == 28)) {
             ///text += _('PWM:') + ' <input class="tvalue" data-type="pwm" type="text" data-port="' + index + '" value="' + (portSettings.pwm || 0) + '" size=4 maxsize="3"/>';
             text += ', ' + _('Smooth:') + ' <input type="checkbox" class="tvalue" data-type="misc" data-port="' + index + '" ' + (portSettings.misc   ? 'checked' : '') + '/> ';
-            if (portSettings.misc == 1) {
+            if (portSettings.misc == 1 || portSettings.misc == true) {
                 text += ' <input class="tvalue" data-type="m2" type="text"  style="width: 70px" data-port="' + index + '" value="' + (portSettings.m2 || 1) + '" maxsize="3"/>';
             }
         }
@@ -325,7 +331,7 @@
         }
         
         // Displei
-        if (portSettings.pty != 255) {
+        if (portSettings.pty == 0 || portSettings.pty == 1 || portSettings.pty == 2 || (portSettings.pty == 3 && portSettings.d != 5) || (portSettings.pty == 4 && (portSettings.m == 0 || (portSettings.m == 1 && portSettings.d != 4)))) {
             text += ', ' + _('Disp:') + ' <input class="tvalue" data-type="disp" type="text" style="width: 30px" data-port="' + index + '" value="' + (portSettings.disp || '') + '" maxsize="2"/>';
         }
         text += '</td>';
@@ -344,8 +350,7 @@
             ports[index][attr] = $(this).val();
         }
 
-        ///if (attr == 'm' || attr == 'pty' || attr == 'd') {
-        if (attr == 'm' || attr == 'pty' || (ports[index].pty == 3 && attr == 'd')) {
+        if (attr == 'm' || attr == 'pty' || ((ports[index].pty == 3 || ports[index].pty == 4) && attr == 'd') || (ports[index].pty == 1 && attr == 'misc')) {
             // if input
             if (ports[index].pty == 0) {
                 // m: 0 - on close, 1 - on change, 2 - on open
@@ -359,9 +364,11 @@
 
                 if (ports[index].eth    === undefined) ports[index].eth = '';
                 if (ports[index].ecmd   === undefined) ports[index].ecmd = '';
+                if (ports[index].af     === undefined) ports[index].af = 0;
                 if (ports[index].naf    === undefined) ports[index].naf = 0;
                 if (ports[index].d      === undefined) ports[index].d = 0;
                 if (ports[index].misc   === undefined) ports[index].misc = 0;
+                if (ports[index].disp   === undefined) ports[index].disp = '';
                 if (ports[index].m      === undefined) ports[index].m = 0;
                 if (ports[index].m > 3) ports[index].m = 0;
 
@@ -375,18 +382,20 @@
 
                 if (ports[index].eth    !== undefined) delete ports[index].eth;
                 if (ports[index].ecmd   !== undefined) delete ports[index].ecmd;
+                if (ports[index].af     !== undefined) delete ports[index].af;
                 if (ports[index].naf    !== undefined) delete ports[index].naf;
                 if (ports[index].d      === undefined) ports[index].d = 0;
-                ///if (ports[index].misc   !== undefined) delete ports[index].misc;
+                if (ports[index].misc   === undefined) ports[index].misc = 0;
+                if (ports[index].disp   === undefined) ports[index].disp = '';
+                if (ports[index].m2     === undefined) ports[index].m2 = 1;
+                if (ports[index].fr     === undefined) ports[index].fr = 0;
                 if (ports[index].m      === undefined) ports[index].m = 0;
-                if (ports[index].m != 0) {
-                    ports[index].misc = 0;
-                    ports[index].m2   = 1;
-                    ports[index].fr   = 0;
-                } else {
+                if (ports[index].m != 1) {
                     if (ports[index].misc   !== undefined) delete ports[index].misc;
-                    if (ports[index].m2     !== undefined) delete ports[index].m2;
                     if (ports[index].fr     !== undefined) delete ports[index].fr;
+                }
+                if (ports[index].misc == 1) {
+                    ports[index].m2 = 1;
                 }
                 if (ports[index].m > 2) ports[index].m = 0;
             } else
@@ -398,8 +407,11 @@
 
                 if (ports[index].eth    === undefined) ports[index].eth  = '';
                 if (ports[index].ecmd   === undefined) ports[index].ecmd = '';
+                if (ports[index].af     === undefined) ports[index].af = 0;
+                if (ports[index].naf    === undefined) ports[index].naf = 0;
                 if (ports[index].d      !== undefined) delete ports[index].d;
                 if (ports[index].misc   === undefined) ports[index].misc = 0;
+                if (ports[index].disp   === undefined) ports[index].disp = '';
                 if (ports[index].m      === undefined) ports[index].m = 0;
             } else
             if (ports[index].pty == 3) {
@@ -410,6 +422,8 @@
 
                 if (ports[index].eth    === undefined) ports[index].eth  = '';
                 if (ports[index].ecmd   === undefined) ports[index].ecmd = '';
+                if (ports[index].af     === undefined) ports[index].af = 0;
+                if (ports[index].naf    === undefined) ports[index].naf = 0;
                 if (ports[index].d      === undefined) ports[index].d = 1;
                 if (ports[index].d != 3) {
                     ports[index].misc = 0;
@@ -419,6 +433,9 @@
                     if (ports[index].misc   === undefined) ports[index].misc = 0;
                     if (ports[index].m      === undefined) ports[index].m = 0;
                     if (ports[index].hst    === undefined) ports[index].hst = 0;
+                }
+                if (ports[index].d == 4) {
+                    if (ports[index].disp   !== undefined) delete ports[index].disp;
                 }
                 if (ports[index].m > 3) ports[index].m = 0;
             } else
@@ -430,6 +447,7 @@
 
                 if (ports[index].eth    !== undefined) delete ports[index].eth;
                 if (ports[index].ecmd   !== undefined) delete ports[index].ecmd;
+                if (ports[index].af     !== undefined) delete ports[index].af;
                 if (ports[index].naf    !== undefined) delete ports[index].naf;
                 if (ports[index].m      === undefined) ports[index].m = 0;
                 if (ports[index].misc   === undefined) ports[index].misc = 0;
