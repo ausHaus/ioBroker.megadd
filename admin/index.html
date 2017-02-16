@@ -131,7 +131,6 @@
         },
         "PWM:":                 {"en": "PWM:",                  "de": "PWM:",                       "ru": "PWM:"},
         "Sensor type:":         {"en": "Sensor type:",          "de": "Sensortyp:",                 "ru": "Тип сенсора:"},
-        "Dev:":                 {"en": "Sensor type:",          "de": "Sensortyp:",                 "ru": "Тип сенсора:"},
         "De-bounce:":           {"en": "De-bounce:",            "de": "Entprellen:",                "ru": "Дребезг:"}
     };
     var onchange = null;
@@ -314,7 +313,7 @@
         //I2C Bus
         if (portSettings.pty == 4 && portSettings.m == 1) {
             text += _('SCL:') + ' <input class="tvalue" data-type="misc" type="text" style="width: 70px" data-port="' + index + '" value="' + (portSettings.misc || 0) + '" maxsize="3"/>';
-            text += ', ' + _('Dev:') + ' <select class="tvalue" data-type="d" data-port="' + index + '">';
+            text += ', ' + _('Sensor type:') + ' <select class="tvalue" data-type="d" data-port="' + index + '">';
             text += '<option value="0" ' + ((portSettings.d == 0) ? 'selected' : '') + '>' + _('Unk') + '</option>';
             text += '<option value="1" ' + ((portSettings.d == 1) ? 'selected' : '') + '>' + _('HTU21D') + '</option>';
             text += '<option value="2" ' + ((portSettings.d == 2) ? 'selected' : '') + '>' + _('BH1750') + '</option>';
@@ -874,7 +873,7 @@
                         aPorts[p].name    = ports[p].name || ('P' + p);
                         aPorts[p].m       = aPorts[p].m   || 0;
                         if (aPorts[p].m == 1) {
-                            if (aPorts[p].d == 0) {
+                            if (aPorts[p].d == 0 || aPorts[p].d == 4) {
                                 aPorts[p].role    = ports[p].role || 'state';
                             }
                             if (aPorts[p].d == 1) {
@@ -885,6 +884,9 @@
                             }
                             if (aPorts[p].d == 2 || aPorts[p].d == 3) {
                                 aPorts[p].role    = ports[p].role || 'value';
+                            }
+                            if (aPorts[p].d == 20) {
+                                aPorts[p].role    = ports[p].role || 'button';
                             }
                         }
                         if (aPorts[p].m == 2) {
