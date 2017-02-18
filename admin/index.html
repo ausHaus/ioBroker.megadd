@@ -227,13 +227,12 @@
 
         text += '<td class="tspace">';
         
-        // raw
+        // misc P&R
         if (portSettings.pty == 0) {
-            text += ' <input type="checkbox" class="tvalue" data-type="misc" data-port="' + index + '" ' + (portSettings.misc   ? 'checked' : '') + '/>, ';
+            text += _('Misc:') + ' <input type="checkbox" class="tvalue" data-type="misc" data-port="' + index + '" ' + (portSettings.misc   ? 'checked' : '') + '/>, ';
         }
 
         // ecmd(Action) and eth(net action)
-        ///if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && portSettings.d != 1 && portSettings.d != 2)) {
         if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && (portSettings.d == 3 || portSettings.d == 4))) {
             // ecmd(Action)
             text += _('Action:') + ' <input class="tvalue" data-type="ecmd" type="text" data-port="' + index + '" value="' + (portSettings.ecmd || '') + '"  style="width: 70px" maxsize="11"/>, ';
