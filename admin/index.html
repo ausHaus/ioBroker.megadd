@@ -323,7 +323,7 @@
         }
         
         if (portSettings.pty == 0) {
-            if (portSettings.m == 1) {
+            if (portSettings.m == 1 || portSettings.m == 3 || portSettings.misc == 1) {
                 text += ', ' + _('Long:')   + ' <input type="checkbox" class="tvalue" data-type="long" data-port="' + index + '" ' + (portSettings.long   ? 'checked' : '') + '/>';
             }
             text += ', ' + _('Double:') + ' <input type="checkbox" class="tvalue" data-type="double" data-port="' + index + '" ' + (portSettings.double ? 'checked' : '') + '/>';
@@ -349,7 +349,7 @@
             ports[index][attr] = $(this).val();
         }
 
-        if (attr == 'm' || attr == 'pty' || ((ports[index].pty == 3 || ports[index].pty == 4) && attr == 'd') || (ports[index].pty == 1 && attr == 'misc')) {
+        if (attr == 'm' || attr == 'pty' || ((ports[index].pty == 3 || ports[index].pty == 4) && attr == 'd') || ((ports[index].pty == 0 || ports[index].pty == 1) && attr == 'misc')) {
             // if input
             if (ports[index].pty == 0) {
                 // m: 0 - on close, 1 - on change, 2 - on open, 3 - clic mode
