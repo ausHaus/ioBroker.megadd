@@ -333,7 +333,7 @@
         }
         
         // Displei
-        if (portSettings.pty == 0 || portSettings.pty == 1 || portSettings.pty == 2 || portSettings.pty == 3 || (portSettings.pty == 4 && (portSettings.m == 0 || (portSettings.m == 1 && portSettings.d != 4)))) {
+        if (portSettings.pty == 0 || portSettings.pty == 1 || portSettings.pty == 2 || (portSettings.pty == 3 && portSettings.d == 3) || (portSettings.pty == 4 && (portSettings.m == 0 || (portSettings.m == 1 && portSettings.d != 4)))) {
             text += ', ' + _('Display:') + ' <input class="tvalue" data-type="disp" type="text" style="width: 30px" data-port="' + index + '" value="' + (portSettings.disp || '') + '" maxsize="2"/>';
         }
         text += '</td>';
