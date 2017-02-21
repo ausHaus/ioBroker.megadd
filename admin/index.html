@@ -241,6 +241,10 @@
         if (portSettings.pty == 0) {
             text += _('Misc:') + ' <input type="checkbox" class="tvalue" data-type="misc" data-port="' + index + '" ' + (portSettings.misc   ? 'checked' : '') + '/>, ';
         }
+        
+        if (portSettings.pty == 3 && portSettings.d == 6 && portSettings.m == 1) {
+            text += _('D1:') + ' <input class="tvalue" data-type="misc" type="text" style="width: 30px" data-port="' + index + '" value="' + (portSettings.misc || '') + '" maxsize="2"/>, ';
+        }
 
         // ecmd(Action) and eth(net action)
         if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && (portSettings.d == 3 || portSettings.d == 4))) {
