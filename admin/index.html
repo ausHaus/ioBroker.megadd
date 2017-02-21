@@ -273,7 +273,8 @@
                 'DHT22',
                 '1W',
                 '1WBUS',
-                'iB'
+                'iB',
+                'W26'
             ];
             text += _('Sensor type:') + ' <select class="tvalue" data-type="d" data-port="' + index + '">';
             text += '<option value="1" ' + ((portSettings.d == 1) ? 'selected' : '') + '>DHT11</option>';
@@ -281,6 +282,7 @@
             text += '<option value="3" ' + ((portSettings.d == 3) ? 'selected' : '') + '>1W</option>';
             text += '<option value="5" ' + ((portSettings.d == 5) ? 'selected' : '') + '>1WBUS</option>';
             text += '<option value="4" ' + ((portSettings.d == 4) ? 'selected' : '') + '>iButton</option>';
+            text += '<option value="6" ' + ((portSettings.d == 6) ? 'selected' : '') + '>W26</option>';
             text += '</select>';
         }
         //smooth
