@@ -797,7 +797,45 @@ function getPortState(port, callback) {
     });
 }
 
-function getPortStateW(ip, password, port, callback) {                  // 1Wire
+// Get State of 1WIRE port   // 1Wire
+function getPortStateW(ip, password, port, callback) {
+    //http://192.168.1.14/sec/?pt=33&cmd=list
+    for (var po = 0; po < adapter.config.ports.length; po++) {
+        if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
+            port = po;
+            var parts = adapter.config.ip.split(':');
+
+            var options = {
+                host: parts[0],
+                port: parts[1] || 80,
+                path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=list'
+            };
+            adapter.log.debug('getPortStateW http://' + options.host + options.path);
+    
+            http.get(options, function (res) {
+                var xmldata = '';
+                res.on('error', function (e) {
+                    adapter.log.warn(e);
+                });
+                res.on('data', function (chunk) {
+                    xmldata += chunk;
+                });
+                res.on('end', function () {
+                    if (res.statusCode != 200) {
+                        adapter.log.warn('Response code: ' + res.statusCode + ' - ' + xmldata);
+                    }
+                    adapter.log.debug('response for ' + adapter.config.ip + "[" + port + ']: ' + xmldata);
+                    // Analyse answer and updates staties
+                    if (callback) callback(port, xmldata);
+                });
+            }).on('error', function (e) {
+            adapter.log.warn('Got error by request ' + e.message);
+            });
+        }
+    }
+}
+
+/*function getPortStateW(ip, password, port, callback) {                  // 1Wire
     //http://192.168.1.14/sec/?pt=33&cmd=list
     for (var po = 0; po < adapter.config.ports.length; po++) {
         if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
@@ -849,7 +887,8 @@ function getPortStateW(ip, password, port, callback) {                  // 1Wire
     });
 	}
     }
-}
+}*/
+
 // Get state of ALL ports
 function getPortsState(ip, password, callback) {
     if (typeof ip == 'function') {
