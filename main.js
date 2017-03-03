@@ -1093,7 +1093,7 @@ function processPortState(_port, value) {
             var t = value.split('/');
             var m = value.match(/temp:([0-9.-]+)/);
             if (m) {
-		if (_ports[_port].d == 5) {
+		if (value.match(/press:([0-9.]+)/)) {
                     secondary = value.match(/press:([0-9.]+)/);
                 } else
                 secondary = value.match(/hum:([0-9.]+)/);
@@ -1263,9 +1263,8 @@ function pollStatus(dev) {
             var _ports = data.split(';');
             var p;
             for (p = 0; p < _ports.length; p++) {
-                // process extra internal temperature later
-                ///if (!adapter.config.ports[p] || adapter.config.ports[p].pty == 4) continue;
-		if (!adapter.config.ports[p] || adapter.config.ports[p].pty == 3 && adapter.config.ports[p].d == 5) continue;
+                // process 1Wire temperature later
+                if (!adapter.config.ports[p] || adapter.config.ports[p].pty == 3 && adapter.config.ports[p].d == 5) continue;
                 processPortState(p, _ports[p]);
             }
             // process 1Wire 
@@ -1566,7 +1565,6 @@ function syncObjects() {
     if (adapter.config.ports) {
         for (var p = 0; p < adapter.config.ports.length; p++) {
             var settings = adapter.config.ports[p];
-            ///var id = (p == 14 || p == 15) ? ('a' + (p - 8)) : ('p' + p);
             var id = (p == 37) ? ('p' + p) : ('p' + p);
 
             if (settings.name) {
@@ -1580,10 +1578,7 @@ function syncObjects() {
             if (adapter.config.ports[p].d !== undefined) {
                 adapter.config.ports[p].d = parseInt(adapter.config.ports[p].d, 10) || 0;
             }
-            /*if (adapter.config.ports[p].misc !== undefined) {
-                adapter.config.ports[p].misc = parseInt(adapter.config.ports[p].misc, 10) || 0;
-            }*/
-	    if (adapter.config.ports[p].misc === 'false' || adapter.config.ports[p].misc === false) adapter.config.ports[p].misc = 0;
+            if (adapter.config.ports[p].misc === 'false' || adapter.config.ports[p].misc === false) adapter.config.ports[p].misc = 0;
             if (adapter.config.ports[p].misc === 'true'  || adapter.config.ports[p].misc === true)  adapter.config.ports[p].misc = 1;
 		
             settings.port = p;
@@ -1669,8 +1664,7 @@ function syncObjects() {
             } else
             // output
             if (settings.pty == 1) {
-                ///if (settings.m) {
-		if (settings.m == 1) {
+                if (settings.m == 1) {
                     settings.factor  = parseFloat(settings.factor || 1);
                     settings.offset  = parseFloat(settings.offset || 0);
 
@@ -1830,7 +1824,7 @@ function syncObjects() {
                     obj2 = {
                         _id: adapter.namespace + '.' + id + '_temperature3',
                         common: {
-                            name: obj.native.name + '_temperature',
+                            name: obj.native.name + '_temperature3',
                             role: 'value.temperature',
                             write: false,
                             read: true,
@@ -1849,6 +1843,8 @@ function syncObjects() {
                         type: 'state'
 		    };
                 } else if (settings.d == 6) { // Wiegand 26
+		    obj.common.write = false;
+                    obj.common.read  = true;
                     obj.common.desc = 'P' + p + ' - wiegand 26';
                     obj.common.type = 'string';
                     obj.common.def  = '';
@@ -1856,14 +1852,17 @@ function syncObjects() {
             } else
             // I2C sensor
             if (settings.pty == 4) {
-                obj.common.write = false;
-                obj.common.read  = true;
-                obj.common.def   = 0;
-                obj.common.type  = 'number';
+                ///obj.common.write = false;
+                ///obj.common.read  = true;
+                ///obj.common.def   = 0;
+                ///obj.common.type  = 'number';
                 if (settings.d == 1) {
+		    obj.common.write = false;
+                    obj.common.read  = true;
                     obj.common.min = -30;
                     obj.common.max = 30;
                     obj.common.unit = '°C';
+		    obj.common.def   = 0;
                     obj.common.desc = 'P' + p + ' - temperature';
                     obj.common.type = 'number';
                     if (!obj.common.role) obj.common.role = 'value.temperature';
@@ -1889,6 +1888,8 @@ function syncObjects() {
                         };
                     }
                 } else if (settings.d == 2 || settings.d == 3) { // Light Sensors
+	            obj.common.write = false;
+                    obj.common.read  = true;
                     obj.common.desc = 'P' + p + ' - light';
                     obj.common.type = 'number';
                     obj.common.def  = 0;
@@ -1896,6 +1897,7 @@ function syncObjects() {
 	        } else if (settings.d == 4 || settings.m == 2) { // Display or I2C SDC port
                     obj.common.write = false;
                     obj.common.read  = false;
+		    obj.common.type = 'string';
                     obj.common.def   = '';
                 } else if (settings.d == 5) {
                     obj.common.write = false;
@@ -2178,15 +2180,7 @@ function syncObjects() {
             }
         }
 
-        // if internal temperature desired
-        /*for (var po = 0; po < adapter.config.ports.length; po++) {
-            if (adapter.config.ports[po].pty == 4) {
-                askInternalTemp = true;
-                break;
-            }
-        }*/
-	    
-	// if 1Wire
+        // if 1Wire
 	for (var po = 0; po < adapter.config.ports.length; po++) {
             if (adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
                 ask1WireTemp = true;
@@ -2237,6 +2231,3 @@ function main() {
     adapter.subscribeStates('*');
     processMessages(true);
 }
-
-
-
