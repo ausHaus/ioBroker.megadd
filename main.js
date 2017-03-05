@@ -798,7 +798,7 @@ function getPortState(port, callback) {
 }
 
 // Get State of 1WIRE port   // 1Wire
-function getPortStateW(ip, password, port, callback) {
+/*function getPortStateW(ip, password, port, callback) {
     //http://192.168.1.14/sec/?pt=33&cmd=list
     for (var po = 0; po < adapter.config.ports.length; po++) {
         if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
@@ -833,9 +833,9 @@ function getPortStateW(ip, password, port, callback) {
             });
         }
     }
-}
+}*/
 
-/*function getPortStateW(ip, password, port, callback) {                  // 1Wire
+function getPortStateW(ip, password, port, callback) {                  // 1Wire
     //http://192.168.1.14/sec/?pt=33&cmd=list
     for (var po = 0; po < adapter.config.ports.length; po++) {
         if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
@@ -887,7 +887,7 @@ function getPortStateW(ip, password, port, callback) {
     });
 	}
     }
-}*/
+}
 
 // Get state of ALL ports
 function getPortsState(ip, password, callback) {
