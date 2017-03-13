@@ -64,7 +64,7 @@ To get the range of the analog value from 100 to 500 set the factor as 400 and o
 
 -------------------
 ## Русский        
-Подробную документацию можно найти здесь: [http://www.ab-log.ru/smart-house/ethernet/MegaD-2561](http://www.ab-log.ru/smart-house/ethernet/MegaD-2561)
+Подробную документацию можно найти здесь: [http://www.ab-log.ru/smart-house/ethernet/megad-2561](http://www.ab-log.ru/smart-house/ethernet/megad-2561)
     
 ### Настройки
 
