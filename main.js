@@ -19,7 +19,7 @@
  */
 /* jshint -W097 */// jshint strict:false
 /*jslint node: true */
-"use strict";
+'use strict';
 
 var utils  = require(__dirname + '/lib/utils'); // Get common adapter utils
 var http   = require('http');
@@ -54,12 +54,12 @@ adapter.on('stateChange', function (id, state) {
                 state.val = 0;
             }
 
-            if (ports[id].common.type == 'boolean' && state.val !== 0 && state.val != 1) {
+            if (ports[id].common.type === 'boolean' && state.val !== 0 && state.val !== 1) {
                 adapter.log.warn(': invalid control value ' + state.val + '. Value for switch must be 0/false or 1/true');
                 state.val = state.val ? 1 : 0;
             }
 
-            if (ports[id].common.type == 'boolean') {
+            if (ports[id].common.type === 'boolean') {
 		if (id.indexOf('_A') !== -1) {                    // DS2413
                     sendCommandToDSA(ports[id].native.port, state.val);
                 } else
@@ -113,10 +113,31 @@ adapter.on('message', function (obj) {
     processMessages();
 });
 
+function httpGet(options, callback, userArg) {
+    http.get(options, function (res) {
+        res.setEncoding('utf8');
+        var data = '';
+        res.on('data', function (chunk) {
+            data += chunk;
+        });
+        res.on('end', function () {
+            if (res.statusCode !== 200) {
+                adapter.log.warn('Response code: ' + res.statusCode + ' - ' + data);
+            } else {
+                adapter.log.debug('Response: ' + data);
+            }
+
+            callback && callback((res.statusCode !== 200) ? res.statusCode : null, (res.statusCode === 200) ? data : null, userArg);
+        });
+    }).on('error', function (err) {
+        callback && callback(err, null, userArg);
+    });
+}
+
 function processMessages(ignore) {
     adapter.getMessage(function (err, obj) {
         if (obj) {
-            if (!ignore && obj && obj.command == 'send') processMessage(obj.message);
+            if (!ignore && obj && obj.command === 'send') processMessage(obj.message);
             processMessages();
         }
     });
@@ -192,7 +213,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
             options.path += '&d=' + settings.d;
         }
     } else
-    if (settings.pty == 1) {
+    if (settings.pty === 1) {
         settings.d = parseInt(settings.d, 10) || 0;
         if (settings.d > 255) settings.d = 255;
         if (settings.d < 0)   settings.d = 0;
@@ -203,7 +224,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
             options.path += '&misc=1' + '&m2=' + (settings.m2 || 0);
         }
     } else
-    if (settings.pty == 2) {
+    if (settings.pty === 2) {
         // Convert misc with given factor and offset
         settings.factor = parseFloat(settings.factor || 1) || 1;
         settings.offset = parseFloat(settings.offset || 0) || 0;
@@ -220,7 +241,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
             options.path += '&naf=1';
         }
     } else
-    if (settings.pty == 3) {
+    if (settings.pty === 3) {
         settings.ecmd = settings.ecmd || '';
         settings.eth  = settings.eth  || '';
         // digital sensor
@@ -239,30 +260,17 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
     // If internal temperature
     ///adapter.log.info('Write config for port ' + port + ': http://' + ip + options.path);
 
-    http.get(options, function (res) {
-        res.setEncoding('utf8');
-        var data = '';
-        res.on('data', function (chunk) {
-            data += chunk;
-        });
-        res.on('end', function () {
-            if (res.statusCode != 200) {
-                adapter.log.warn('Response code: ' + res.statusCode + ' - ' + data);
-            } else {
-                adapter.log.debug('Response: ' + data);
-            }
-
-            if (res.statusCode != 200) errors[port] = res.statusCode;
-
+    httpGet(options, function (err /*, data */) {
+        if (err) {
+            errors[port] = err;
             setTimeout(function () {
                 writeConfigOne(ip, pass, _settings, callback, port, errors);
             }, 1000);
-        });
-    }).on('error', function (err) {
-        errors[port] = err;
-        setTimeout(function () {
-            writeConfigOne(ip, pass, _settings, callback, port, errors);
-        }, 1000);
+        } else {
+            setTimeout(function () {
+                writeConfigOne(ip, pass, _settings, callback, port, errors);
+            }, 1000);
+        }
     });
 }
 
@@ -375,7 +383,7 @@ function findIp(ip) {
     var parts = ip.split(':');
     ip = parts[0];
 
-    if (ip === 'localhost' || ip == '127.0.0.1') return '127.0.0.1';
+    if (ip === 'localhost' || ip === '127.0.0.1') return '127.0.0.1';
 
     var interfaces = require('os').networkInterfaces();
 
@@ -396,7 +404,7 @@ function findIp(ip) {
                     netMask = '255.0.0.0';
                 }
 
-                if (ipMask(address.address, netMask) == ipMask(ip, netMask)) {
+                if (ipMask(address.address, netMask) === ipMask(ip, netMask)) {
                     return address.address;
                 }
             }
@@ -421,8 +429,8 @@ function writeConfigDevice(ip, pass, config, callback) {
         path: '/' + pass + '/?cf=1'
     };
 
-    if (config.eip !== undefined && config.eip != ip)   options.path += '&eip=' + config.eip;
-    if (config.pwd !== undefined && config.pwd != pass) options.path += '&pwd=' + config.pwd;
+    if (config.eip !== undefined && config.eip !== ip)   options.path += '&eip=' + config.eip;
+    if (config.pwd !== undefined && config.pwd !== pass) options.path += '&pwd=' + config.pwd;
 
     if (config.eip === undefined && config.pwd === undefined) {
         var sip = findIp(config.eip || ip);
@@ -435,22 +443,8 @@ function writeConfigDevice(ip, pass, config, callback) {
 
     adapter.log.info('Write config for device: http://' + ip + options.path);
 
-    http.get(options, function (res) {
-        res.setEncoding('utf8');
-        var data = '';
-        res.on('data', function (chunk) {
-            data += chunk;
-        });
-        res.on('end', function () {
-            if (res.statusCode != 200) {
-                adapter.log.warn('Response code: ' + res.statusCode + ' - ' + data);
-            } else {
-                adapter.log.debug('Response: ' + data);
-            }
-            callback(null);
-        });
-    }).on('error', function (err) {
-        callback(err.message);
+    httpGet(options, function (err /*, data */) {
+        callback(err);
     });
 }
 
@@ -459,7 +453,7 @@ function writeConfig(obj) {
     var password;
     var _ports;
     var config;
-    if (obj && obj.message && typeof obj.message == 'object') {
+    if (obj && obj.message && typeof obj.message === 'object') {
         ip       = obj.message.ip;
         password = obj.message.password;
         _ports   = obj.message.ports;
@@ -472,7 +466,7 @@ function writeConfig(obj) {
     }
 
     var errors = [];
-    if (ip && ip != '0.0.0.0') {
+    if (ip && ip !== '0.0.0.0') {
         var running = false;
         if (_ports && _ports.length) {
             running = true;
@@ -525,82 +519,72 @@ function detectPortConfig(ip, pass, length, callback, port, result) {
 
     adapter.log.info('read config from port: http://' + ip + options.path);
 
-    http.get(options, function (res) {
-        res.setEncoding('utf8');
-        var data = '';
-        res.on('data', function (chunk) {
-            data += chunk;
-        });
-
-        res.on('end', function () {
-            if (res.statusCode != 200) {
-                adapter.log.warn('Response code: ' + res.statusCode + ' - ' + data);
-            } else {
-                var settings = {};
-                // Analyse answer
-                var inputs = data.match(/<input [^>]+>/g);
-                var i;
-
-                if (inputs) {
-                    for (i = 0; i < inputs.length; i++) {
-                        var args = inputs[i].match(/(\w+)=([^<> ]+)/g);
-                        if (args) {
-                            var isettings = {};
-                            for (var a = 0; a < args.length; a++) {
-                                var parts = args[a].split('=');
-                                isettings[parts[0]] = parts[1].replace(/^"/, '').replace(/"$/, '');
-                            }
-
-                            if (isettings.name) {
-                                settings[isettings.name] = (isettings.value === undefined) ? '' : isettings.value;
-                                if (isettings.type == 'checkbox' && inputs[i].indexOf('checked') == -1) {
-                                    settings[isettings.name] = (!settings[isettings.name]) ? 1 : 0;
-                                }
-                            }
-                        }
-                    }
-                }
-                inputs = data.match(/<select .+?<\/select>/g);
-                if (inputs) {
-                    for (i = 0; i < inputs.length; i++) {
-                        var name = inputs[i].match(/name=(\w+)/);
-                        if (name) {
-                            var vars = inputs[i].match(/<option value=(\d+) selected>/);
-                            if (vars) {
-                                settings[name[1]] = vars[1];
-                            } else {
-                                settings[name[1]] = 0;
-                            }
-                        }
-                    }
-                }
-
-                if (settings.pty === undefined) {
-                    if (data.indexOf('>Type In<') != -1) {
-                        settings.pty = 0;
-                    } else if (data.indexOf('>Type Out<') != -1) {
-                        settings.pty = 1;
-                    }
-                } else {
-                    settings.pty = parseInt(settings.pty, 10);
-                }
-
-                if (settings.m    !== undefined) settings.m    = parseInt(settings.m,    10);
-                if (settings.d    !== undefined) settings.d    = parseInt(settings.d,    10);
-                if (settings.pn   !== undefined) settings.pn   = parseInt(settings.pn,   10);
-                if (settings.naf  !== undefined) settings.naf  = parseInt(settings.naf,  10);
-		if (settings.fr   !== undefined) settings.fr   = parseInt(settings.fr,   10);
-                if (settings.m2   !== undefined) settings.m2   = parseInt(settings.m2,   10);
-                if (settings.ecmd === 'ð=')      settings.ecmd = '';
-
-                result[port] = settings;
-                adapter.log.debug('Response: ' + data);
-            }
+    httpGet(options, function (err, data) {
+        if (err) {
+            adapter.log.error(err);
             detectPortConfig(ip, pass, length, callback, port, result);
-        });
-    }).on('error', function (err) {
-        adapter.log.error(err.message);
-        detectPortConfig(ip, pass, length, callback, port, result);
+        } else {
+            var settings = {};
+            // Analyse answer
+            var inputs = data.match(/<input [^>]+>/g);
+            var i;
+
+            if (inputs) {
+                for (i = 0; i < inputs.length; i++) {
+                    var args = inputs[i].match(/(\w+)=([^<> ]+)/g);
+                    if (args) {
+                        var isettings = {};
+                        for (var a = 0; a < args.length; a++) {
+                            var parts = args[a].split('=');
+                            isettings[parts[0]] = parts[1].replace(/^"/, '').replace(/"$/, '');
+                        }
+
+                        if (isettings.name) {
+                            settings[isettings.name] = (isettings.value === undefined) ? '' : isettings.value;
+                            if (isettings.type === 'checkbox' && inputs[i].indexOf('checked') === -1) {
+                                settings[isettings.name] = (!settings[isettings.name]) ? 1 : 0;
+                            }
+                        }
+                    }
+                }
+            }
+            inputs = data.match(/<select .+?<\/select>/g);
+            if (inputs) {
+                for (i = 0; i < inputs.length; i++) {
+                    var name = inputs[i].match(/name=(\w+)/);
+                    if (name) {
+                        var vars = inputs[i].match(/<option value=(\d+) selected>/);
+                        if (vars) {
+                            settings[name[1]] = vars[1];
+                        } else {
+                            settings[name[1]] = 0;
+                        }
+                    }
+                }
+            }
+
+            if (settings.pty === undefined) {
+                if (data.indexOf('>Type In<') !== -1) {
+                    settings.pty = 0;
+                } else if (data.indexOf('>Type Out<') !== -1) {
+                    settings.pty = 1;
+                }
+            } else {
+                settings.pty = parseInt(settings.pty, 10);
+            }
+
+            if (settings.m    !== undefined) settings.m    = parseInt(settings.m,    10);
+            if (settings.d    !== undefined) settings.d    = parseInt(settings.d,    10);
+            if (settings.pn   !== undefined) settings.pn   = parseInt(settings.pn,   10);
+            if (settings.naf  !== undefined) settings.naf  = parseInt(settings.naf,  10);
+            if (settings.fr   !== undefined) settings.fr   = parseInt(settings.fr,   10);
+            if (settings.m2   !== undefined) settings.m2   = parseInt(settings.m2,   10);
+            if (settings.ecmd === 'ð=')      settings.ecmd = '';
+
+            result[port] = settings;
+            adapter.log.debug('Response: ' + data);
+            detectPortConfig(ip, pass, length, callback, port, result);
+        }
     });
 }
 
@@ -614,62 +598,51 @@ function detectDeviceConfig(ip, pass, callback) {
 
     adapter.log.info('read config from port: http://' + ip + options.path);
 
-    http.get(options, function (res) {
-        res.setEncoding('utf8');
-        var data = '';
-        res.on('data', function (chunk) {
-            data += chunk;
-        });
+    httpGet(options, function (err, data) {
+        if (err) {
+            callback(err);
+        } else {
+            // parse config
+            // Analyse answer
+            var inputs = data.match(/<input [^>]+>/g);
+            var i;
+            var settings = {};
 
-        res.on('end', function () {
-            if (res.statusCode != 200) {
-                adapter.log.warn('Response code: ' + res.statusCode + ' - ' + data);
-            } else {
-                // parse config
-                // Analyse answer
-                var inputs = data.match(/<input [^>]+>/g);
-                var i;
-                var settings = {};
+            if (inputs) {
+                for (i = 0; i < inputs.length; i++) {
+                    var args = inputs[i].match(/(\w+)=([^<> ]+)/g);
+                    if (args) {
+                        var isettings = {};
+                        for (var a = 0; a < args.length; a++) {
+                            var parts = args[a].split('=');
+                            isettings[parts[0]] = parts[1].replace(/^"/, '').replace(/"$/, '');
+                        }
 
-                if (inputs) {
-                    for (i = 0; i < inputs.length; i++) {
-                        var args = inputs[i].match(/(\w+)=([^<> ]+)/g);
-                        if (args) {
-                            var isettings = {};
-                            for (var a = 0; a < args.length; a++) {
-                                var parts = args[a].split('=');
-                                isettings[parts[0]] = parts[1].replace(/^"/, '').replace(/"$/, '');
-                            }
-
-                            if (isettings.name) {
-                                settings[isettings.name] = (isettings.value === undefined) ? '' : isettings.value;
-                                if (isettings.type == 'checkbox' && inputs[i].indexOf('checked') == -1) {
-                                    settings[isettings.name] = (!settings[isettings.name]) ? 1 : 0;
-                                }
+                        if (isettings.name) {
+                            settings[isettings.name] = (isettings.value === undefined) ? '' : isettings.value;
+                            if (isettings.type === 'checkbox' && inputs[i].indexOf('checked') === -1) {
+                                settings[isettings.name] = (!settings[isettings.name]) ? 1 : 0;
                             }
                         }
                     }
                 }
-                inputs = data.match(/<select .+?<\/select>/g);
-                if (inputs) {
-                    for (i = 0; i < inputs.length; i++) {
-                        var name = inputs[i].match(/name=(\w+)/);
-                        if (name) {
-                            var vars = inputs[i].match(/<option value=(\d+) selected>/);
-                            if (vars) {
-                                settings[name[1]] = vars[1];
-                            } else {
-                                settings[name[1]] = 0;
-                            }
-                        }
-                    }
-                }
-                callback(null, settings);
             }
-        });
-    }).on('error', function (err) {
-        adapter.log.error(err.message);
-        callback(err);
+            inputs = data.match(/<select .+?<\/select>/g);
+            if (inputs) {
+                for (i = 0; i < inputs.length; i++) {
+                    var name = inputs[i].match(/name=(\w+)/);
+                    if (name) {
+                        var vars = inputs[i].match(/<option value=(\d+) selected>/);
+                        if (vars) {
+                            settings[name[1]] = vars[1];
+                        } else {
+                            settings[name[1]] = 0;
+                        }
+                    }
+                }
+            }
+            callback(null, settings);
+        }
     });
 }
 
@@ -677,14 +650,14 @@ function detectDeviceConfig(ip, pass, callback) {
 function detectPorts(obj) {
     var ip;
     var password;
-    if (obj && obj.message && typeof obj.message == 'object') {
+    if (obj && obj.message && typeof obj.message === 'object') {
         ip       = obj.message.ip;
         password = obj.message.password;
     } else {
         ip       = obj ? obj.message : '';
         password = adapter.config.password;
     }
-    if (ip && ip != '0.0.0.0') {
+    if (ip && ip !== '0.0.0.0') {
         getPortsState(ip, password, function (err, response) {
             if (err || !response) {
                 if (obj.callback) adapter.sendTo(obj.from, obj.command, {error: err, response: response}, obj.callback);
@@ -775,127 +748,39 @@ function getPortState(port, callback) {
     };
     adapter.log.debug('getPortState http://' + options.host + options.path);
 
-    http.get(options, function (res) {
-        var xmldata = '';
-        res.on('error', function (e) {
-            adapter.log.warn('megaD: ' + e);
-        });
-        res.on('data', function (chunk) {
-
-            xmldata += chunk;
-        });
-        res.on('end', function () {
-            if (res.statusCode != 200) {
-                adapter.log.warn('Response code: ' + res.statusCode + ' - ' + xmldata);
-            }
-            adapter.log.debug('response for ' + adapter.config.ip + "[" + port + ']: ' + xmldata);
-            // Analyse answer and updates staties
-            if (callback) callback(port, xmldata);
-        });
-    }).on('error', function (e) {
-        adapter.log.warn('Got error by request ' + e.message);
+    httpGet(options, function (err, data) {
+        if (err) {
+            callback && callback(err);
+        } else {
+            callback && callback(port, data);
+        }
     });
 }
 
-// Get State of 1WIRE port   // 1Wire
-/*function getPortStateW(ip, password, port, callback) {
+function getPortStateW(port, callback) {                  // 1Wire
     //http://192.168.1.14/sec/?pt=33&cmd=list
-    for (var po = 0; po < adapter.config.ports.length; po++) {
-        if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
-            port = po;
-            var parts = adapter.config.ip.split(':');
-
-            var options = {
-                host: parts[0],
-                port: parts[1] || 80,
-                path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=list'
-            };
-            adapter.log.debug('getPortStateW http://' + options.host + options.path);
-    
-            http.get(options, function (res) {
-                var xmldata = '';
-                res.on('error', function (e) {
-                    adapter.log.warn(e);
-                });
-                res.on('data', function (chunk) {
-                    xmldata += chunk;
-                });
-                res.on('end', function () {
-                    if (res.statusCode != 200) {
-                        adapter.log.warn('Response code: ' + res.statusCode + ' - ' + xmldata);
-                    }
-                    adapter.log.debug('response for ' + adapter.config.ip + "[" + port + ']: ' + xmldata);
-                    // Analyse answer and updates staties
-                    if (callback) callback(port, xmldata);
-                });
-            }).on('error', function (e) {
-            adapter.log.warn('Got error by request ' + e.message);
-            });
-        }
-    }
-}*/
-
-function getPortStateW(ip, password, port, callback) {                  // 1Wire
-    //http://192.168.1.14/sec/?pt=33&cmd=list
-    for (var po = 0; po < adapter.config.ports.length; po++) {
-        if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
-            port = po;
-    if (typeof ip == 'function') {
-        callback = ip;
-        ip = null;
-    }
-    if (typeof password == 'function') {
-        callback = password;
-        password = null;
-    }
-    password = (password === undefined || password === null) ? adapter.config.password : password;
-    ip       =  ip || adapter.config.ip;
-    
-    var parts = ip.split(':');
+    var parts = adapter.config.ip.split(':');
 
     var options = {
-	host: parts[0],
+        host: parts[0],
         port: parts[1] || 80,
-        path: '/' + password + '/?pt=' + port + '&cmd=list'
+        path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=list'
     };
 
     adapter.log.debug('getPortStateW http://' + options.host + options.path);
 
-    http.get(options, function (res) {
-        var xmldata = '';
-        res.on('error', function (e) {
-	    adapter.log.warn(e);
-        });
-        res.on('data', function (chunk) {
-            xmldata += chunk;
-        });
-        res.on('end', function () {
-            if (res.statusCode != 200) {
-                adapter.log.warn('Response code: ' + res.statusCode + ' - ' + xmldata);
-                if (callback) callback(xmldata);
-            } else {
-                adapter.log.debug('Response for ' + ip + "[" + port + ']: ' + xmldata);
-                // Analyse answer and updates statuses
-		//if (callback) callback(null, xmldata);
-                if (callback) callback(port, xmldata);
-            }
-
-        });
-    }).on('error', function (e) {
-        adapter.log.warn('Got error by request to ' + ip + ': ' + e.message);
-        callback(e.message);
+    httpGet(options, function (err, data) {
+        callback(port, data);
     });
-	}
-    }
 }
 
 // Get state of ALL ports
 function getPortsState(ip, password, callback) {
-    if (typeof ip == 'function') {
+    if (typeof ip === 'function') {
         callback = ip;
         ip = null;
     }
-    if (typeof password == 'function') {
+    if (typeof password === 'function') {
         callback = password;
         password = null;
     }
@@ -912,28 +797,8 @@ function getPortsState(ip, password, callback) {
 
     adapter.log.debug('getPortState http://' + options.host + options.path);
 
-    http.get(options, function (res) {
-        var xmldata = '';
-        res.on('error', function (e) {
-            adapter.log.warn(e);
-        });
-        res.on('data', function (chunk) {
-            xmldata += chunk;
-        });
-        res.on('end', function () {
-            if (res.statusCode != 200) {
-                adapter.log.warn('Response code: ' + res.statusCode + ' - ' + xmldata);
-                if (callback) callback(xmldata);
-            } else {
-                adapter.log.debug('Response for ' + ip + '[all]: ' + xmldata);
-                // Analyse answer and updates statuses
-                if (callback) callback(null, xmldata);
-            }
-
-        });
-    }).on('error', function (e) {
-        adapter.log.warn('Got error by request to ' + ip + ': ' + e.message);
-        callback(e.message);
+    httpGet(options, function (err, data) {
+        if (callback) callback(err, data);
     });
 }
 
@@ -944,7 +809,7 @@ function processClick(port) {
     ///if (config.m == 1 && config.long) {
     if ((config.m == 1 || config.misc == 1) && config.long) {	
         // Detect EDGE
-        if (config.oldValue !== undefined && config.oldValue !== null && config.oldValue != config.value) {
+        if (config.oldValue !== undefined && config.oldValue !== null && config.oldValue !== config.value) {
             adapter.log.debug('new state detected on port [' + port + ']: ' + config.value);
 
             // If pressed
@@ -1089,7 +954,7 @@ function processPortState(_port, value) {
         var secondary = null;
         var f;
         // Value can be OFF/5 or 27/0 or 27 or ON  or DS2413 ON/OFF 
-        if (typeof value == 'string') {
+        if (typeof value === 'string') {
             var t = value.split('/');
             var m = value.match(/temp:([0-9.-]+)/);
             if (m) {
@@ -1106,22 +971,22 @@ function processPortState(_port, value) {
             if (t[1] !== undefined && secondary === null) { // counter
                 secondary = parseInt(t[1], 10);
             }
-	    if (t[1] == 'OFF') {  // DS2413
+	    if (t[1] === 'OFF') {  // DS2413
                 secondary = 0;
             } else
-            if (t[1] == 'ON') {
+            if (t[1] === 'ON') {
                 secondary = 1;
-            } else if (t[1] == 'NA') {
+            } else if (t[1] === 'NA') {
                 secondary = 0;
                 q = 0x82; // DS2413 not connected
             }
 
-            if (value == 'OFF') {
+            if (value === 'OFF') {
                 value = 0;
             } else
-            if (value == 'ON') {
+            if (value === 'ON') {
                 value = 1;
-            } else if (value == 'NA') {
+            } else if (value === 'NA') {
                 value = 0;
                 q = 0x82; // sensor not connected
             } else {
@@ -1130,16 +995,16 @@ function processPortState(_port, value) {
         }
 
         // If status changed
-        if (value !== _ports[_port].value || _ports[_port].q != q || (secondary !== null && _ports[_port].secondary != secondary)) {
+        if (value !== _ports[_port].value || _ports[_port].q !== q || (secondary !== null && _ports[_port].secondary != secondary)) {
             _ports[_port].oldValue = _ports[_port].value;
 
             ///if (!_ports[_port].pty) {
 	    if (_ports[_port].pty == 0) {
-                if (value !== _ports[_port].value || _ports[_port].q != q) {
+                if (value !== _ports[_port].value || _ports[_port].q !== q) {
                     _ports[_port].value = value;
                     processClick(_port);
                 }
-                if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
+                if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q !== q)) {
                     adapter.setState(_ports[_port].id + '_counter', {val: secondary, ack: true, q: q});
                 }
             } else
@@ -1151,18 +1016,18 @@ function processPortState(_port, value) {
                 adapter.setState(_ports[_port].id, {val: f, ack: true, q: q});
             } else
             if (_ports[_port].pty == 3) {
-                if (_ports[_port].value != value || _ports[_port].q != q) {
+                if (_ports[_port].value !== value || _ports[_port].q !== q) {
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
                 }
-                if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
+                if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q !== q)) {
                     adapter.setState(_ports[_port].id + '_humidity', {val: secondary, ack: true, q: q});
                 }
             } else
             if (_ports[_port].pty == 4) {
-                if (_ports[_port].value != value || _ports[_port].q != q) {
+                if (_ports[_port].value !== value || _ports[_port].q !== q) {
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
                 }
-                if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
+                if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q !== q)) {
 		    if (_ports[_port].d == 5) {
                         adapter.setState(_ports[_port].id + '_pressure', {val: secondary, ack: true, q: q});
                     } else
@@ -1182,11 +1047,11 @@ function processPortState(_port, value) {
                     adapter.setState(_ports[_port].id, {val: value ? true : false, ack: true, q: q});
                 }
 		if (_ports[_port].m == 2) {  // DS2413
-		    if (value !== _ports[_port].value || _ports[_port].q != q) {
+		    if (value !== _ports[_port].value || _ports[_port].q !== q) {
                         adapter.log.debug('detected new value on port [' + _port + '_A' + ']: ' + (value ? true : false));
                         adapter.setState(_ports[_port].id + '_A', {val: value ? true : false, ack: true, q: q});
 		    }
-                    if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q != q)) {
+                    if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q !== q)) {
                         adapter.log.debug('detected new value on port [' + _port + '_B' + ']: ' + (secondary ? true : false));
                         adapter.setState(_ports[_port].id + '_B', {val: secondary ? true : false, ack: true, q: q});
                     }
@@ -1210,31 +1075,27 @@ function processPortStateW(_port, value) {      //1Wire
         return;
     }
 
-    if (value !== null) {
+    if (value && typeof value === 'string') {
         // Value can be 30c5b8000000:27.50;32c5b8000000:28.81;31c5b8000000:27.43.......
-        if (typeof value == 'string') {
-            var list = value.split(';');
-            var sensor = 0;
-            for (var i = 0 ; i < list.length ; ++i) {
-                 var value = list[i + sensor];
-                 var id = value.split(':');
-                 var m = value.match(/:(\D*[0-9.]+)/);
-                 if (m) {
-                     value = parseFloat(m[1]);
-                     // If status changed
-		     if (value !== _ports[_port].value || _ports[_port].q != q) {
-                         _ports[_port].oldValue = _ports[_port].value;
-                         if (_ports[_port].pty == 3 && _ports[_port].d == 5) {
-                             if (_ports[_port].value != value || _ports[_port].q != q) {
-                                 adapter.log.debug('detected new value on port [' + _port + '_' + id[0] + ']: ' + value);
-                                 adapter.setState(_ports[_port].id + '_' + id[0], {val: value, ack: true, q: q});
-                             }
-                         }
-                         _ports[_port].value    = value;
-                         _ports[_port].q        = q;
+        var list = value.split(';');
+        var sensor = 0;
+        for (var i = 0; i < list.length ; ++i) {
+             var val = list[i + sensor];
+             var id = val.split(':');
+             var m = val.match(/:(\D*[0-9.]+)/);
+             if (m) {
+                 val = parseFloat(m[1]);
+                 // If status changed
+                 if (val !== _ports[_port].value || _ports[_port].q !== q) {
+                     _ports[_port].oldValue = _ports[_port].value;
+                     if (_ports[_port].pty == 3 && _ports[_port].d == 5) {
+                         adapter.log.debug('detected new value on port [' + _port + '_' + id[0] + ']: ' + val);
+                         adapter.setState(_ports[_port].id + '_' + id[0], {val: value, ack: true, q: q});
                      }
-	         }
-            }
+                     _ports[_port].value = val;
+                     _ports[_port].q     = q;
+                 }
+             }
         }
     }
 }    
@@ -1264,18 +1125,16 @@ function pollStatus(dev) {
             var p;
             for (p = 0; p < _ports.length; p++) {
                 // process 1Wire temperature later
-                if (!adapter.config.ports[p] || adapter.config.ports[p].pty == 3 && adapter.config.ports[p].d == 5) continue;
+                if (!adapter.config.ports[p] || (adapter.config.ports[p].pty == 3 && adapter.config.ports[p].d == 5)) continue;
                 processPortState(p, _ports[p]);
             }
             // process 1Wire 
             if (ask1WireTemp) {
-                getPortStateW(function (err, data) {
-                    for (var po = 0; po < adapter.config.ports.length; po++) {
-                        if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
-                            processPortStateW(po, data);
-                        }
+                for (var po = 0; po < adapter.config.ports.length; po++) {
+                    if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
+                        getPortStateW(po, processPortStateW);
                     }
-                });
+                }
             }
         }
     });
@@ -1287,7 +1146,7 @@ function restApi(req, res) {
     var url    = req.url;
     var pos    = url.indexOf('?');
 
-    if (pos != -1) {
+    if (pos !== -1) {
         var arr = url.substring(pos + 1).split('&');
         url = url.substring(0, pos);
 
@@ -1306,7 +1165,7 @@ function restApi(req, res) {
     var parts  = url.split('/');
     var device = parts[1];
 
-    if (!device || (device != adapter.instance && (!adapter.config.name || device != adapter.config.name))) {
+    if (!device || (device !== adapter.instance && (!adapter.config.name || device !== adapter.config.name))) {
         if (device && values.pt !== undefined) {
             // Try to find name of the instance
             if (parseInt(device, 10) == device) {
@@ -1318,7 +1177,7 @@ function restApi(req, res) {
                 adapter.getForeignObjects('system.adapter.megadd.*', 'instance', function (err, arr) {
                     if (arr) {
                         for (var id in arr) {
-                            if (arr[id].native.name == device) {
+                            if (arr[id].native.name === device) {
                                 adapter.sendTo(id, 'send', {pt: parseInt(values.pt, 10), val: values.ib});
                                 res.writeHead(200, {'Content-Type': 'text/html'});
                                 res.end('OK', 'utf8');
@@ -1384,33 +1243,20 @@ function sendCommand(port, value) {
     adapter.log.debug('Send command "' + data + '" to ' + adapter.config.ip);
 
     // Set up the request
-    http.get(options, function (res) {
-        var xmldata = '';
-        res.setEncoding('utf8');
-        res.on('error', function (e) {
-            adapter.log.warn(e.toString());
-        });
-        res.on('data', function (chunk) {
-            xmldata += chunk;
-        });
-        res.on('end', function () {
-            adapter.log.debug('Response "' + xmldata + '"');
-            if (adapter.config.ports[port]) {
-                // Set state only if positive response from megaD
-                if (adapter.config.ports[port].m == 0) {
-                    adapter.setState(adapter.config.ports[port].id, value ? true : false, true);
-                }
-                if (adapter.config.ports[port].m == 1) {
-                    var f = value * adapter.config.ports[port].factor + adapter.config.ports[port].offset;
-                    f = Math.round(f * 1000) / 1000;
-                    adapter.setState(adapter.config.ports[port].id, f, true);
-                }
-            } else {
-                adapter.log.warn('Unknown port ' + port);
+    httpGet(options, function (err /* , data */) {
+        if (adapter.config.ports[port]) {
+            // Set state only if positive response from megaD
+            if (adapter.config.ports[port].m == 0) {
+                adapter.setState(adapter.config.ports[port].id, value ? true : false, true);
             }
-        });
-    }).on('error', function (e) {
-        adapter.log.warn('Got error by post request ' + e.toString());
+            if (adapter.config.ports[port].m == 1) {
+                var f = value * adapter.config.ports[port].factor + adapter.config.ports[port].offset;
+                f = Math.round(f * 1000) / 1000;
+                adapter.setState(adapter.config.ports[port].id, f, true);
+            }
+        } else {
+            adapter.log.warn('Unknown port ' + port);
+        }
     });
 }
 
@@ -1428,26 +1274,13 @@ function sendCommandToDSA(port, value) {          //DS2413 port A
     adapter.log.debug('Send command "' + data + '" to ' + adapter.config.ip);
 
     // Set up the request
-    http.get(options, function (res) {
-        var xmldata = '';
-        res.setEncoding('utf8');
-        res.on('error', function (e) {
-            adapter.log.warn(e.toString());
-        });
-        res.on('data', function (chunk) {
-            xmldata += chunk;
-        });
-        res.on('end', function () {
-            adapter.log.debug('Response "' + xmldata + '"');
-            if (adapter.config.ports[port]) {
-                // Set state only if positive response from megaD
-                adapter.setState(adapter.config.ports[port].id + '_A', value ? true : false, true);
-            } else {
-                adapter.log.warn('Unknown port ' + port);
-            }
-        });
-    }).on('error', function (e) {
-        adapter.log.warn('Got error by post request ' + e.toString());
+    httpGet(options, function (err, data) {
+        if (adapter.config.ports[port]) {
+            // Set state only if positive response from megaD
+            adapter.setState(adapter.config.ports[port].id + '_A', value ? true : false, true);
+        } else {
+            adapter.log.warn('Unknown port ' + port);
+        }
     });
 }
 
@@ -1465,26 +1298,13 @@ function sendCommandToDSB(port, value) {          //DS2413 port B
     adapter.log.debug('Send command "' + data + '" to ' + adapter.config.ip);
 
     // Set up the request
-    http.get(options, function (res) {
-        var xmldata = '';
-        res.setEncoding('utf8');
-        res.on('error', function (e) {
-            adapter.log.warn(e.toString());
-        });
-        res.on('data', function (chunk) {
-            xmldata += chunk;
-        });
-        res.on('end', function () {
-            adapter.log.debug('Response "' + xmldata + '"');
-	    if (adapter.config.ports[port]) {
-                // Set state only if positive response from megaD
-                adapter.setState(adapter.config.ports[port].id + '_B', value ? true : false, true);
-            } else {
-                adapter.log.warn('Unknown port ' + port);
-            }
-        });
-    }).on('error', function (e) {
-        adapter.log.warn('Got error by post request ' + e.toString());
+    httpGet(options, function (/* err, data */) {
+        if (adapter.config.ports[port]) {
+            // Set state only if positive response from megaD
+            adapter.setState(adapter.config.ports[port].id + '_B', value ? true : false, true);
+        } else {
+            adapter.log.warn('Unknown port ' + port);
+        }
     });
 }
 
@@ -1502,28 +1322,14 @@ function sendCommandToCounter(port, value) {
     adapter.log.debug('Send command "' + data + '" to ' + adapter.config.ip);
 
     // Set up the request
-    http.get(options, function (res) {
-        var xmldata = '';
-        res.setEncoding('utf8');
-        res.on('error', function (e) {
-            adapter.log.warn(e.toString());
-        });
-        res.on('data', function (chunk) {
-            xmldata += chunk;
-        });
-        res.on('end', function () {
-            adapter.log.debug('Response "' + xmldata + '"');
-        });
-    }).on('error', function (e) {
-        adapter.log.warn('Got error by post request ' + e.toString());
-    });
+    httpGet(options);
 }
 
 function addToEnum(enumName, id, callback) {
     adapter.getForeignObject(enumName, function (err, obj) {
         if (!err && obj) {
             var pos = obj.common.members.indexOf(id);
-            if (pos == -1) {
+            if (pos === -1) {
                 obj.common.members.push(id);
                 adapter.setForeignObject(obj._id, obj, function (err) {
                     if (callback) callback(err);
@@ -1541,7 +1347,7 @@ function removeFromEnum(enumName, id, callback) {
     adapter.getForeignObject(enumName, function (err, obj) {
         if (!err && obj) {
             var pos = obj.common.members.indexOf(id);
-            if (pos != -1) {
+            if (pos !== -1) {
                 obj.common.members.splice(pos, 1);
                 adapter.setForeignObject(obj._id, obj, function (err) {
                     if (callback) callback(err);
@@ -2122,20 +1928,20 @@ function syncObjects() {
         // Sync existing
         for (i = 0; i < newObjects.length; i++) {
             for (j = 0; j < _states.length; j++) {
-                if (newObjects[i]._id == _states[j]._id) {
+                if (newObjects[i]._id === _states[j]._id) {
                     var mergedObj = JSON.parse(JSON.stringify(_states[j]));
 
                     if (mergedObj.common.history) delete mergedObj.common.history;
                     if (mergedObj.common.mobile)  delete mergedObj.common.mobile;
 
-                    if (JSON.stringify(mergedObj) != JSON.stringify(newObjects[i])) {
+                    if (JSON.stringify(mergedObj) !== JSON.stringify(newObjects[i])) {
                         adapter.log.info('Update state ' + newObjects[i]._id);
                         if (_states[j].common.history) newObjects[i].common.history = _states[j].common.history;
                         if (_states[j].common.mobile)  newObjects[i].common.mobile  = _states[j].common.mobile;
                         adapter.setObject(newObjects[i]._id, newObjects[i]);
                     }
 
-                    if (newObjects[i].native.room != _states[j].native.room) {
+                    if (newObjects[i].native.room !== _states[j].native.room) {
                         adapter.log.info('Update state room ' + newObjects[i]._id + ': ' + _states[j].native.room + ' => ' + newObjects[i].native.room);
                         if (_states[j].native.room) removeFromEnum(_states[j].native.room, _states[j]._id);
                         if (newObjects[i].native.room) addToEnum(newObjects[i].native.room, newObjects[i]._id);
@@ -2150,7 +1956,7 @@ function syncObjects() {
         for (i = 0; i < newObjects.length; i++) {
             found = false;
             for (j = 0; j < _states.length; j++) {
-                if (newObjects[i]._id == _states[j]._id) {
+                if (newObjects[i]._id === _states[j]._id) {
                     found = true;
                     break;
                 }
@@ -2168,7 +1974,7 @@ function syncObjects() {
         for (j = 0; j < _states.length; j++) {
             found = false;
             for (i = 0; i < newObjects.length; i++) {
-                if (newObjects[i]._id == _states[j]._id) {
+                if (newObjects[i]._id === _states[j]._id) {
                     found = true;
                     break;
                 }
@@ -2188,12 +1994,12 @@ function syncObjects() {
             }
         }
 
-        if (adapter.config.ip && adapter.config.ip != '0.0.0.0') {
+        if (adapter.config.ip && adapter.config.ip !== '0.0.0.0') {
             pollStatus();
             setInterval(pollStatus, adapter.config.pollInterval * 1000);
         }
 
-        if (adapter.config.ip && adapter.config.ip != '0.0.0.0') {
+        if (adapter.config.ip && adapter.config.ip !== '0.0.0.0') {
             pollStatus();
             setInterval(pollStatus, adapter.config.pollInterval * 1000);
         }
