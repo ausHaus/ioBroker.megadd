@@ -2192,11 +2192,6 @@ function syncObjects() {
             pollStatus();
             setInterval(pollStatus, adapter.config.pollInterval * 1000);
         }
-
-        if (adapter.config.ip && adapter.config.ip != '0.0.0.0') {
-            pollStatus();
-            setInterval(pollStatus, adapter.config.pollInterval * 1000);
-        }
     });
 }
 
