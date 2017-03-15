@@ -2,6 +2,11 @@
 ioBroker MegaD-2561 adapter
 =================
 
+[![NPM version](http://img.shields.io/npm/v/iobroker.megadd.svg)](https://www.npmjs.com/package/iobroker.megadd)
+[![Downloads](https://img.shields.io/npm/dm/iobroker.megadd.svg)](https://www.npmjs.com/package/iobroker.megadd)
+[![Tests](https://travis-ci.org/ausHaus/ioBroker.megadd.svg?branch=master)](https://travis-ci.org/ausHaus/ioBroker.megadd)
+
+[![NPM](https://nodei.co/npm/iobroker.megad.png?downloads=true)](https://nodei.co/npm/iobroker.megadd/)
 
 Lets control the [MegaD-2561](http://www.ab-log.ru/smart-house/ethernet/megad-2561) over ethernet.
 ## English 
