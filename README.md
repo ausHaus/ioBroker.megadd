@@ -4,7 +4,6 @@ ioBroker MegaD-2561 adapter
 
 [![NPM version](http://img.shields.io/npm/v/iobroker.megadd.svg)](https://www.npmjs.com/package/iobroker.megadd)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.megadd.svg)](https://www.npmjs.com/package/iobroker.megadd)
-[![Tests](https://travis-ci.org/ausHaus/ioBroker.megadd.svg?branch=master)](https://travis-ci.org/ausHaus/ioBroker.megadd)
 
 [![NPM](https://nodei.co/npm/iobroker.megadd.png?downloads=true)](https://nodei.co/npm/iobroker.megadd/)
 
