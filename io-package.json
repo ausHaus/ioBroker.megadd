@@ -1,12 +1,12 @@
 {
     "common": {
         "name":                     "megadd",
-        "version":                  "0.1.5",
+        "version":                  "0.1.6",
         "news": {
-            "0.1.0": {
-                "en":               "initial commit",
-                "de":               "initial commit",
-                "ru":               "initial commit"
+            "0.1.6": {
+                "en":               "fix README",
+                "de":               "fix README",
+                "ru":               "fix README"
             }
         },
         "title":                    "MegaD-2561 Adapter",
