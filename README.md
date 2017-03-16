@@ -14,7 +14,7 @@ Lets control the [MegaD-2561](http://www.ab-log.ru/smart-house/ethernet/megad-25
 
 ## Install
 
-```node iobroker.js add megad```
+```node iobroker.js add megadd```
 
 ### Information
 The device has 36 ports, inputs/outputs and DHT11/DHT22, I2C bus, DS18B20 in ports and 1WBUS.
@@ -118,7 +118,7 @@ ioBrokerЗначение = MegaЗначение * Множитель + Сдви�
          
       
 ## Changelog
-### 0.1.6 (2017-02-18)
+### 0.1.7 (2017-02-18)
 * (ausHaus) fix README
 
 ### 0.1.5 (2017-02-18)
