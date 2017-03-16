@@ -25,7 +25,7 @@ var utils  = require(__dirname + '/lib/utils'); // Get common adapter utils
 var http   = require('http');
 var server =  null;
 var ports  = {};
-var ask1WireTemp = false;   //1Wire
+var ask1WireTemp = false;
 var connected = false;
 
 var adapter = utils.adapter('megadd');
@@ -257,9 +257,6 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
         options.path += '&pty=255';
     }
 
-    // If internal temperature
-    ///adapter.log.info('Write config for port ' + port + ': http://' + ip + options.path);
-
     httpGet(options, function (err /*, data */) {
         if (err) {
             errors[port] = err;
@@ -419,9 +416,6 @@ function writeConfigDevice(ip, pass, config, callback) {
     //sip: IP-адрес сервера
     //sct: скрипт, который вызывается на сервере в случаях, заданных пользователем (макс. 15 байт)
 
-    //pr: Пресет. Значения: 0 - пресет не установлен, 1 - пресет для исполнительного модуля MegaD-7I7O
-    //tc: Проверка значений встроенного температурного сенсора. Значения: 0 - не проверять, 1 - проверять
-    //at: Значение температуры, при достижении которого в случае, если задана проверка встроенного температурного датчика, устройство будет отправлять сообщения на сервер
     var parts = ip.split(':');
     var options = {
         host: parts[0],
@@ -746,6 +740,7 @@ function getPortState(port, callback) {
         port: parts[1] || 80,
         path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=get'
     };
+	
     adapter.log.debug('getPortState http://' + options.host + options.path);
 
     httpGet(options, function (err, data) {
@@ -757,7 +752,8 @@ function getPortState(port, callback) {
     });
 }
 
-function getPortStateW(port, callback) {                  // 1Wire
+// Get state of 1WBUS ports
+function getPortStateW(port, callback) {
     //http://192.168.1.14/sec/?pt=33&cmd=list
     var parts = adapter.config.ip.split(':');
 
@@ -766,7 +762,7 @@ function getPortStateW(port, callback) {                  // 1Wire
         port: parts[1] || 80,
         path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=list'
     };
-
+	
     adapter.log.debug('getPortStateW http://' + options.host + options.path);
 
     httpGet(options, function (err, data) {
@@ -1090,7 +1086,7 @@ function processPortStateW(_port, value) {      //1Wire
                      _ports[_port].oldValue = _ports[_port].value;
                      if (_ports[_port].pty == 3 && _ports[_port].d == 5) {
                          adapter.log.debug('detected new value on port [' + _port + '_' + id[0] + ']: ' + val);
-                         adapter.setState(_ports[_port].id + '_' + id[0], {val: value, ack: true, q: q});
+                         adapter.setState(_ports[_port].id + '_' + id[0], {val: val, ack: true, q: q});
                      }
                      _ports[_port].value = val;
                      _ports[_port].q     = q;
@@ -1997,12 +1993,7 @@ function syncObjects() {
         if (adapter.config.ip && adapter.config.ip !== '0.0.0.0') {
             pollStatus();
             setInterval(pollStatus, adapter.config.pollInterval * 1000);
-        }
-
-        if (adapter.config.ip && adapter.config.ip !== '0.0.0.0') {
-            pollStatus();
-            setInterval(pollStatus, adapter.config.pollInterval * 1000);
-        }
+	}
     });
 }
 
