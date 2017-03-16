@@ -1,12 +1,12 @@
 {
     "common": {
         "name":                     "megadd",
-        "version":                  "0.1.7",
+        "version":                  "0.1.8",
         "news": {
-            "0.1.7": {
-                "en":               "fix README",
-                "de":               "fix README",
-                "ru":               "fix README"
+            "0.1.8": {
+                "en":               "add 1WBUS",
+                "de":               "add 1WBUS",
+                "ru":               "add 1WBUS"
             }
         },
         "title":                    "MegaD-2561 Adapter",
