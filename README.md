@@ -16,7 +16,7 @@ Lets control the [MegaD-2561](http://www.ab-log.ru/smart-house/ethernet/megad-25
 ```node iobroker.js add megadd```
 
 ### Information
-The device has 36 ports, inputs/outputs and DHT11/DHT22, I2C bus, DS18B20 in ports and 1WBUS.
+The device has 38 ports, inputs/outputs, DSen (DHT11, DHT22, DS18B20 in ports, 1WBUS, iButton (DS1990A, EM-Marine), Wiegand-26), I2C bus (HTU21D, BMP180, BH1750, TSL2591, SSD1306, MCP23008).
 To read the state of the port call
 ```http://mega_ip/sec/?pt=4&cmd=get``` , where sec is password (max 3 chars), 4 is port number
 The result will come as "ON", "OFF" or analog value for analog ports
@@ -117,6 +117,9 @@ ioBrokerЗначение = MegaЗначение * Множитель + Сдви�
          
       
 ## Changelog
+### 0.1.9 (2017-03-17)
+* (ausHaus) add files
+
 ### 0.1.8 (2017-03-16)
 * (ausHaus) add 1WBUS
 
