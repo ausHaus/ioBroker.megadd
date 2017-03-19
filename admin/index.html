@@ -77,6 +77,7 @@
         "DS2413":               {"en": "DS2413",                "de": "DS2413",                     "ru": "DS2413"},
         "HTU21D":               {"en": "HTU21D",                "de": "HTU21D",                     "ru": "HTU21D"},
         "BMP180":               {"en": "BMP180",                "de": "BMP180",                     "ru": "BMP180"},
+        "BMP28x":               {"en": "BMP28x",                "de": "BMP28x",                     "ru": "BMP28x"},
         "BH1750":               {"en": "BH1750",                "de": "BH1750",                     "ru": "BH1750"},
         "TSL2591":              {"en": "TSL2591",               "de": "TSL2591",                    "ru": "TSL2591"},
         "SSD1306":              {"en": "SSD1306",               "de": "SSD1306",                    "ru": "SSD1306"},
@@ -324,6 +325,7 @@
             text += '<option value="0" ' + ((portSettings.d == 0) ? 'selected' : '') + '>' + _('ANY') + '</option>';
             text += '<option value="1" ' + ((portSettings.d == 1) ? 'selected' : '') + '>' + _('HTU21D') + '</option>';
             text += '<option value="5" ' + ((portSettings.d == 5) ? 'selected' : '') + '>' + _('BMP180') + '</option>';
+            text += '<option value="6" ' + ((portSettings.d == 6) ? 'selected' : '') + '>' + _('BMP28x') + '</option>';
             text += '<option value="2" ' + ((portSettings.d == 2) ? 'selected' : '') + '>' + _('BH1750') + '</option>';
             text += '<option value="3" ' + ((portSettings.d == 3) ? 'selected' : '') + '>' + _('TSL2591') + '</option>';
             text += '<option value="4" ' + ((portSettings.d == 4) ? 'selected' : '') + '>' + _('SSD1306') + '</option>';
@@ -339,7 +341,7 @@
         }
         
         // Displei
-        if (portSettings.pty == 0 || portSettings.pty == 1 || portSettings.pty == 2 || (portSettings.pty == 3 && portSettings.d == 3) || (portSettings.pty == 4 && (portSettings.m == 0 || (portSettings.m == 1 && portSettings.d != 4)))) {
+        if (portSettings.pty == 0 || portSettings.pty == 1 || portSettings.pty == 2 || (portSettings.pty == 3 && portSettings.d == 3)) {
             text += ', ' + _('Display:') + ' <input class="tvalue" data-type="disp" type="text" style="width: 30px" data-port="' + index + '" value="' + (portSettings.disp || '') + '" maxsize="2"/>';
         }
         text += '</td>';
@@ -899,6 +901,11 @@
                             }
                             if (aPorts[p].d == 5) {
                                 aPorts[p].d       = aPorts[p].d    || (_ports[p].indexOf('press') != -1 ? 1 : 0);
+                                aPorts[p].misc    = aPorts[p].misc || 0;
+                                aPorts[p].role    = ports[p].role  || 'value.temperature';
+                            }
+                            if (aPorts[p].d == 6) {
+                                aPorts[p].d       = aPorts[p].d    || (_ports[p].indexOf('press') != -1 ? 1 : 0) || (_ports[p].indexOf('hum') != -1 ? 1 : 0);
                                 aPorts[p].misc    = aPorts[p].misc || 0;
                                 aPorts[p].role    = ports[p].role  || 'value.temperature';
                             }
