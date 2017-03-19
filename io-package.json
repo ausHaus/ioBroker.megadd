@@ -1,12 +1,12 @@
 {
     "common": {
         "name":                     "megadd",
-        "version":                  "0.1.9",
+        "version":                  "0.2.0",
         "news": {
-            "0.1.9": {
-                "en":               "add files",
-                "de":               "add files",
-                "ru":               "add files"
+            "0.2.0": {
+                "en":               "add I2C port BMx280",
+                "de":               "add I2C port BMx280",
+                "ru":               "add I2C port BMx280"
             }
         },
         "title":                    "MegaD-2561 Adapter",
