@@ -1024,7 +1024,7 @@ function processPortState(_port, value) {
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
                 }
                 if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q !== q)) {
-		    if (_ports[_port].d == 5) {
+		    if (_ports[_port].d == 5 || _ports[_port].d == 6) {
                         adapter.setState(_ports[_port].id + '_pressure', {val: secondary, ack: true, q: q});
                     } else
                     adapter.setState(_ports[_port].id + '_humidity', {val: secondary, ack: true, q: q});
@@ -1699,7 +1699,7 @@ function syncObjects() {
 	        } else if (settings.d == 4 || settings.m == 2) { // Display or I2C SDC port
                     obj.common.write = false;
                     obj.common.read  = false;
-		    obj.common.type = 'string';
+		    obj.common.type = 'state';
                     obj.common.def   = '';
                 } else if (settings.d == 5) {
                     obj.common.write = false;
@@ -1730,6 +1730,54 @@ function syncObjects() {
                         },
                         type: 'state'
                     };
+	        } else if (settings.d == 6) {  //BMx280
+                    obj.common.write = false;
+                    obj.common.read  = true;
+                    obj.common.def   = 0;
+                    obj.common.min = -30;
+                    obj.common.max = 30;
+                    obj.common.unit = '°C';
+                    obj.common.desc = 'P' + p + ' - temperature';
+                    obj.common.type = 'number';
+                    if (!obj.common.role) obj.common.role = 'value.temperature';
+                    obj1 = {
+                        _id: adapter.namespace + '.' + id + '_pressure',
+                        common: {
+                            name: obj.common.name + '_pressure',
+                            role: 'value.pressure',
+                            write: false,
+                            read: true,
+                            unit: 'kPa',
+                            def: 0,
+                            min: 0,
+                            max: 1000,
+                            desc: 'P' + p + ' - pressure',
+                            type: 'number'
+			},
+                        native: {
+                            port: p
+                        },
+                        type: 'state'
+                    };
+                    obj2 = {
+                        _id: adapter.namespace + '.' + id + '_humidity',
+                        common: {
+                            name: obj.common.name + '_humidity',
+                            role: 'value.humidity',
+                            write: false,
+                            read: true,
+                            unit: '%',
+                            def: 0,
+                            min: 0,
+                            max: 100,
+                            desc: 'P' + p + ' - humidity',
+                            type: 'number'
+                        },
+                        native: {
+                            port: p
+                        },
+                        type: 'state'
+		    };
                 } else if (settings.d == 20) { // MCP23008
                     obj = {
                         _id: adapter.namespace + '.' + id + '_P0',
