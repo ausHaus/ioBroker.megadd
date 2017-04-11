@@ -65,6 +65,7 @@
         "Double:":              {"en": "Double:",               "de": "Double-Click:",              "ru": "Двойное нажатие:"},
         "SCL:":                 {"en": "SCL port:",             "de": "SCL port:",                  "ru": "SCL порт:"},
         "Display:":             {"en": "Display port:",         "de": "Anzeigen port:",             "ru": "Дисплей порт:"},
+        "Bright:":              {"en": "Bright:",               "de": "Helligkeit:",                "ru": "Яркость:"},
         "not monitored":        {"en": "not monitored",         "de": "nicht beobachtet",           "ru": "не наблюдать"},
         "> threshold":          {"en": "> threshold",           "de": "> Schwellwert",              "ru": "> порога"},
         "< threshold":          {"en": "< threshold",           "de": "< Schwellwert",              "ru": "< порога"},
@@ -250,8 +251,8 @@
         // ecmd(Action) and eth(net action)
         if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && (portSettings.d == 3 || portSettings.d == 4))) {
             // ecmd(Action)
-            text += _('Action:') + ' <input class="tvalue" data-type="ecmd" type="text" data-port="' + index + '" value="' + (portSettings.ecmd || '') + '"  style="width: 70px" maxsize="11"/>, ';
-            text += ' <input type="checkbox" class="tvalue" data-type="af" data-port="' + index + '" ' + (portSettings.af   ? 'checked' : '') + '/>';
+            text += _('Action:') + ' <input class="tvalue" data-type="ecmd" type="text" data-port="' + index + '" value="' + (portSettings.ecmd || '') + '"  style="width: 70px" maxsize="11"/>';
+            text += ' <input type="checkbox" class="tvalue" data-type="af" data-port="' + index + '" ' + (portSettings.af   ? 'checked' : '') + '/>, ';
             // eth(net action)
             text += _('Net:') + ' <input class="tvalue" data-type="eth" type="text" data-port="' + index + '" value="' + portSettings.eth  + '" style="width: 70px" maxsize="35"/>';
             text += ' <input type="checkbox" class="tvalue" data-type="naf" data-port="' + index + '" ' + (portSettings.naf   ? 'checked' : '') + '/>';
@@ -333,9 +334,13 @@
             text += '</select>';
         }
         
+        if (portSettings.pty == 4 && portSettings.m == 1 && portSettings.d == 4) {
+            text += ', ' + _('Bright:') + ' <input class="tvalue" data-type="hst" type="text" style="width: 70px" data-port="' + index + '" value="' + (portSettings.hst || 127) + '" maxsize="3"/>';
+        }
+        
         if (portSettings.pty == 0) {
             if (portSettings.m == 1 || portSettings.m == 3 || portSettings.misc == 1) {
-                text += ', ' + _('Long:')   + ' <input type="checkbox" class="tvalue" data-type="long" data-port="' + index + '" ' + (portSettings.long   ? 'checked' : '') + '/>';
+                text += ', ' + _('Long:') + ' <input type="checkbox" class="tvalue" data-type="long" data-port="' + index + '" ' + (portSettings.long   ? 'checked' : '') + '/>';
             }
             text += ', ' + _('Double:') + ' <input type="checkbox" class="tvalue" data-type="double" data-port="' + index + '" ' + (portSettings.double ? 'checked' : '') + '/>';
         }
@@ -466,6 +471,7 @@
                 if (ports[index].misc   === undefined) ports[index].misc = 0;
                 if (ports[index].d      === undefined) ports[index].d = 0;
                 if (ports[index].disp   === undefined) ports[index].disp = '';
+                if (ports[index].hst    === undefined) ports[index].hst = '';
                 if (ports[index].m == 2) {
                     if (ports[index].disp   !== undefined) delete ports[index].disp;
                 }
@@ -888,7 +894,7 @@
                         aPorts[p].name    = ports[p].name || ('P' + p);
                         aPorts[p].m       = aPorts[p].m   || 0;
                         if (aPorts[p].m == 1) {
-                            if (aPorts[p].d == 0 || aPorts[p].d == 4) {
+                            if (aPorts[p].d == 0) {
                                 aPorts[p].role    = ports[p].role || 'state';
                             }
                             if (aPorts[p].d == 1) {
@@ -897,6 +903,10 @@
                                 aPorts[p].role    = ports[p].role  || 'value.temperature';
                             }
                             if (aPorts[p].d == 2 || aPorts[p].d == 3) {
+                                aPorts[p].role    = ports[p].role || 'value.light';
+                            }
+                            if (aPorts[p].d == 4) {
+                                aPorts[p].hst     = aPorts[p].hst || 0;
                                 aPorts[p].role    = ports[p].role || 'value.light';
                             }
                             if (aPorts[p].d == 5) {
