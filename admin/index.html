@@ -240,7 +240,7 @@
         text += '<td class="tspace">';
         
         // misc P&R
-        if (portSettings.pty == 0) {
+        if (portSettings.pty == 0 && portSettings.m != 3) {
             text += _('Misc:') + ' <input type="checkbox" class="tvalue" data-type="misc" data-port="' + index + '" ' + (portSettings.misc   ? 'checked' : '') + '/>, ';
         }
         
