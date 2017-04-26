@@ -467,7 +467,8 @@ function writeConfigDevice(ip, pass, config, callback) {
         if (!sip) {
             return callback('Device with "' + ip + '" is not reachable from ioBroker.');
         }
-        options.path += '&sip=' + sip + (config.port ? ':' + config.port : '');
+        ///options.path += '&sip=' + sip + (config.port ? ':' + config.port : '');
+	options.path += '&sip=' + sip + (config.port ? ':' + config.port : ':80');  
         options.path += '&sct=' + encodeURIComponent(adapter.instance + '/');
     }
 
