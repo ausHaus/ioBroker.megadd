@@ -3,6 +3,11 @@
         "name":                     "megadd",
         "version":                  "0.2.0",
         "news": {
+	    "0.2.2": {
+                "en":               "add display settings (Bright)",
+                "de":               "add display settings (Bright)",
+                "ru":               "add display settings (Bright)"
+            }, 
             "0.2.0": {
                 "en":               "add I2C Bus sensor (BMx280)",
                 "de":               "add I2C Bus sensor (BMx280)",
