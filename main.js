@@ -159,6 +159,7 @@ function processMessage(message) {
     // Command from instance with web server
     if (adapter.config.ports[port]) {
         // If digital port
+	///if (!adapter.config.ports[port].pty && adapter.config.ports[port].m != 1) {   
         if (!adapter.config.ports[port].pty && adapter.config.ports[port].misc != 1) {
             adapter.config.ports[port].value = !adapter.config.ports[port].m ? 1 : 0;
             processClick(port);
