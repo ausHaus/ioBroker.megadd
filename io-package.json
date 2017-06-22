@@ -1,7 +1,7 @@
 {
     "common": {
         "name":                     "megadd",
-        "version":                  "0.2.0",
+        "version":                  "0.2.2",
         "news": {
 	    "0.2.2": {
                 "en":               "add display settings (Bright)",
