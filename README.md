@@ -117,6 +117,9 @@ ioBrokerЗначение = MegaЗначение * Множитель + Сдви�
          
       
 ## Changelog
+### 0.2.2 (2017-06-23)
+* (ausHaus) add display settings (Bright)
+
 ### 0.2.0 (2017-03-20)
 * (ausHaus) add I2C Bus sensor (BMx280)
 
