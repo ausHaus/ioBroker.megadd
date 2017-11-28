@@ -117,6 +117,9 @@ ioBrokerЗначение = MegaЗначение * Множитель + Сдви�
          
       
 ## Changelog
+### 0.3.0 (2017-11-29)
+* (ausHaus) add I2C Bus port expander (MC23008, MC23017, PCA9685)
+
 ### 0.2.2 (2017-06-23)
 * (ausHaus) add display settings (Bright)
 
