@@ -26,7 +26,9 @@ var http   = require('http');
 var server =  null;
 var ports  = {};
 var ask1WireTemp = false;
+var askEXTport = false;
 var connected = false;
+var test = true;
 
 var adapter = utils.adapter('megadd');
 
@@ -65,18 +67,26 @@ adapter.on('stateChange', function (id, state) {
                 } else
                 if (id.indexOf('_B') !== -1) {                    // DS2413
                     sendCommandToDSB(ports[id].native.port, state.val);
-                } else
-                sendCommand(ports[id].native.port, state.val);
+		} else
+		if (id.indexOf('_P' + ports[id].native.port + '_P') !== -1) {   // EXT
+                    sendCommandToEXT(id, ports[id].native.port, ports[id].native.ext, state.val);
+                } else {
+                    sendCommand(ports[id].native.port, state.val);
+                }	
             } else if (id.indexOf('_counter') !== -1) {
                 sendCommandToCounter(ports[id].native.port, state.val);
             } else {
-                ports[id].native.offset = parseFloat(ports[id].native.offset || 0) || 0;
-                ports[id].native.factor = parseFloat(ports[id].native.factor || 1) || 1;
+		if (id.indexOf('_P' + ports[id].native.port + '_P') !== -1) {   // EXT
+                    sendCommandToEXT(id, ports[id].native.port, ports[id].native.ext, state.val);
+                } else {    
+                    ports[id].native.offset = parseFloat(ports[id].native.offset || 0) || 0;
+                    ports[id].native.factor = parseFloat(ports[id].native.factor || 1) || 1;
 
-                state.val = (state.val - ports[id].native.offset) / ports[id].native.factor;
-                state.val = Math.round(state.val);
+                    state.val = (state.val - ports[id].native.offset) / ports[id].native.factor;
+                    state.val = Math.round(state.val);
 
-                sendCommand(ports[id].native.port, state.val);
+                    sendCommand(ports[id].native.port, state.val);
+		}	
             }
         }
     }
@@ -166,6 +176,12 @@ function processMessage(message) {
         } else if (adapter.config.ports[port].pty == 3 && adapter.config.ports[port].d == 4) {
             // process iButton
             adapter.setState(adapter.config.ports[port].id, message.val, true);
+	} else if (adapter.config.ports[port].pty == 4 && adapter.config.ports[port].d == 20) {
+            adapter.log.debug('reported new value for port ' + port + ', request actual value');
+            // process MCP230XX
+            getPortStateEXT(port, processPortStateEXT);
+            adapter.config.ports[message.pt].value = !adapter.config.ports[message.pt].m ? 1 : 0;
+            processClick(message.pt);
         } else {
             adapter.log.debug('reported new value for port ' + port + ', request actual value');
             // Get value from analog port
@@ -221,11 +237,21 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
         settings.d = parseInt(settings.d, 10) || 0;
         if (settings.d > 255) settings.d = 255;
         if (settings.d < 0)   settings.d = 0;
+	if (settings.misc == 1)   settings.misc = 1;
+        settings.m2 = parseInt(settings.m2, 10) || 1;    
 
         // digital out
-        options.path += '&pty=1&m=' + (settings.m || 0) + '&d=' + (settings.d || 0) + '&disp=' + (settings.disp || '');;
-        if (settings.m == 1 && settings.misc == 1) {
-            options.path += '&misc=1' + '&m2=' + (settings.m2 || 0);
+	if (settings.m == 0 || settings.m == 1 || settings.m == 3) {    
+            options.path += '&pty=1&m=' + (settings.m || 0) + '&d=' + (settings.d || 0) + '&disp=' + (settings.disp || '');
+	}	
+        if (settings.m == 1) {
+            options.path += '&misc=' + (settings.misc || '') + '&fr=' + (settings.fr || 0);
+        }
+        if (settings.misc == 1) {
+            options.path += '&m2=' + settings.m2;
+        }
+        if (settings.m == 2) {
+            options.path += '&pty=1&m=' + (settings.m || 0) + '&disp=' + (settings.disp || '');
         }
     } else
     if (settings.pty === 2) {
@@ -612,6 +638,16 @@ function detectPortConfig(ip, pass, length, callback, port, result) {
             if (settings.fr   !== undefined) settings.fr   = parseInt(settings.fr,   10);
             if (settings.m2   !== undefined) settings.m2   = parseInt(settings.m2,   10);
             if (settings.ecmd === 'ð=')      settings.ecmd = '';
+		
+	    if (settings.pty == 4 && settings.d == 20) {    //EXT
+                var ext = data.match(/<br>[^>]+<form/g);
+                if (ext) {
+                    ext = data.split(';');
+                    for (var e in ext);
+                    e++;
+                    settings.ext  = parseInt(e, 10);
+                }
+            }
 
             result[port] = settings;
             adapter.log.debug('Response: ' + data);
@@ -787,6 +823,24 @@ function getPortState(port, callback) {
         } else {
             callback && callback(port, data);
         }
+    });
+}
+
+// Get state of EXT ports
+function getPortStateEXT(port, callback) {
+    //http://192.168.1.14/sec/?pt=4&cmd=get
+    var parts = adapter.config.ip.split(':');
+
+    var options = {
+        host: parts[0],
+        port: parts[1] || 80,
+        path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=get'
+    };
+
+    adapter.log.debug('getPortStateEXT http://' + options.host + options.path);
+
+    httpGet(options, function (err, data) {
+        callback(port, data);
     });
 }
 
@@ -1076,7 +1130,7 @@ function processPortState(_port, value) {
                     adapter.log.debug('detected new value on port [' + _port + ']: ' + value);
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
 		}
-		if (_ports[_port].m == 0) {
+		if (_ports[_port].m == 0 || _ports[_port].m == 3) {
                     adapter.log.debug('detected new value on port [' + _port + ']: ' + (value ? true : false));
                     adapter.setState(_ports[_port].id, {val: value ? true : false, ack: true, q: q});
                 }
@@ -1120,7 +1174,8 @@ function processPortStateW(_port, value) {      //1Wire
              if (m) {
                  val = parseFloat(m[1]);
                  // If status changed
-                 if (val !== _ports[_port].value || _ports[_port].q !== q) {
+		 processPortStateWstate(_port, id[0], val);   
+                 /* if (val !== _ports[_port].value || _ports[_port].q !== q) {
                      _ports[_port].oldValue = _ports[_port].value;
                      if (_ports[_port].pty == 3 && _ports[_port].d == 5) {
                          adapter.log.debug('detected new value on port [' + _port + '_' + id[0] + ']: ' + val);
@@ -1128,11 +1183,103 @@ function processPortStateW(_port, value) {      //1Wire
                      }
                      _ports[_port].value = val;
                      _ports[_port].q     = q;
-                 }
+                 } */
              }
         }
     }
-}    
+}
+
+function processPortStateWstate(_port, id, value) {      //1Wire
+    var _ports = adapter.config.ports;
+    var q = 0;
+
+    if (test === true) {
+        adapter.setState(_ports[_port].id + '_' + id, {val: undefined, ack: true, q: undefined});
+    }
+
+    if (value) {
+        adapter.getState(_ports[_port].id + '_' + id, function (err, state) {
+            if (test !== true) {
+                state.val = state.val;
+            } else {
+                state.val = undefined;
+            }
+            // If status changed
+            if (value !== state.val || q !== state.q) {
+                if (_ports[_port].pty == 3 && _ports[_port].d == 5) {
+                    adapter.log.debug('detected new value on port [' + _port + '_' + id + ']: ' + value);
+                    adapter.setState(_ports[_port].id + '_' + id, {val: value, ack: true, q: q});
+                }
+            }
+        });
+    }
+}
+
+function processPortStateEXTport(port, ext, value) {     //EXT
+    var _ports = adapter.config.ports;
+    var q = 0;
+
+    if (test === true) {
+        adapter.setState(_ports[port].id + '_P' + ext, {val: undefined, ack: true, q: undefined});
+    }
+
+    adapter.getState(_ports[port].id + '_P' + ext, function (err, state) {
+        if (test !== true) {
+            if (state.val === 'false' || state.val === false) {
+                state.val = 0;
+            }
+            if (state.val === 'true'  || state.val === true)  {
+                state.val = 1;
+            }
+        } else {
+            state.val = undefined;
+        }
+        if (typeof value === 'string') {
+            if (value === 'OFF') {
+                value = 0;
+            } else
+            if (value === 'ON') {
+                value = 1;
+            } else {
+                value = parseFloat(value) || 0;
+	    }
+	}
+        // If status changed
+        if (value !== state.val || q !== state.q) {
+            if (_ports[port].pty == 4 && _ports[port].d == 20) {
+                adapter.log.debug('detected new value on port [' + port + '_P' + ext + ']: ' + (value ? true : false));
+                adapter.setState(_ports[port].id + '_P' + ext, {val: value ? true : false, ack: true, q: q});
+            }
+            if (_ports[port].pty == 4 && _ports[port].d == 21) {
+                adapter.log.debug('detected new value on port [' + port + '_P' + ext + ']: ' + value);
+                adapter.setState(_ports[port].id + '_P' + ext, {val: value, ack: true, q: q});
+            }
+        }
+    });
+}
+
+function processPortStateEXT(_port, value) {   //MCP23008 - 8port MCP23017 - 16port
+    var _ports = adapter.config.ports;
+    var q = 0;
+
+    if (!_ports[_port]) {
+        // No configuration found
+        adapter.log.warn('Unknown port: ' + _port);
+        return;
+    }
+
+    if (typeof value === 'string') {
+        // Value can be OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF or OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF;OFF
+        var args = value.split(';');
+        for (var i = 0; i < args.length ; ++i) {
+            var val = args[i];
+            processPortStateEXTport(_port, i, val);
+        }
+    }
+    setTimeout(function () {
+        test = false;
+    }, 1000);
+}	    
 
 function pollStatus(dev) {
     /*for (var port = 0; port < adapter.config.ports.length; port++) {
@@ -1158,8 +1305,9 @@ function pollStatus(dev) {
             var _ports = data.split(';');
             var p;
             for (p = 0; p < _ports.length; p++) {
-                // process 1Wire temperature later
+                // process
                 if (!adapter.config.ports[p] || (adapter.config.ports[p].pty == 3 && adapter.config.ports[p].d == 5)) continue;
+		if (!adapter.config.ports[p] || (adapter.config.ports[p].pty == 4 && (adapter.config.ports[p].d == 20 || adapter.config.ports[p].d == 21))) continue;    
                 processPortState(p, _ports[p]);
             }
             // process 1Wire 
@@ -1170,6 +1318,14 @@ function pollStatus(dev) {
                     }
                 }
             }
+	    // process MCP230XX and PCA9685 port
+            if (askEXTport) {
+                for (var po = 0; po < adapter.config.ports.length; po++) {
+                    if (adapter.config.ports[po] && adapter.config.ports[po].pty == 4 && (adapter.config.ports[po].d == 20 || adapter.config.ports[po].d == 21)) {
+                        getPortStateEXT(po, processPortStateEXT);
+                    }
+                }
+            }	
         }
     });
 }
@@ -1288,6 +1444,9 @@ function sendCommand(port, value) {
                 f = Math.round(f * 1000) / 1000;
                 adapter.setState(adapter.config.ports[port].id, f, true);
             }
+	    if (adapter.config.ports[port].pty == 4 && adapter.config.ports[port].d == 4) {
+                adapter.setState(adapter.config.ports[port].id, value, true);
+            }	
         } else {
             adapter.log.warn('Unknown port ' + port);
         }
@@ -1336,6 +1495,39 @@ function sendCommandToDSB(port, value) {          //DS2413 port B
         if (adapter.config.ports[port]) {
             // Set state only if positive response from megaD
             adapter.setState(adapter.config.ports[port].id + '_B', value ? true : false, true);
+        } else {
+            adapter.log.warn('Unknown port ' + port);
+        }
+    });
+}
+
+function sendCommandToEXT(id, port, ext, value) {          //MCP
+    //http://192.168.1.14/sec/?cmd=36e3:4000
+    if (adapter.config.ports[port].pty == 4 && adapter.config.ports[port].d == 21) {
+        if (value > 4095) value = 4095;
+        if (value < 0) value = 0;
+    }
+    var data = 'cmd=' + ext + ':' + value;
+
+    var parts = adapter.config.ip.split(':');
+
+    var options = {
+        host: parts[0],
+        port: parts[1] || 80,
+        path: '/' + adapter.config.password + '/?' + data
+    };
+    adapter.log.debug('Send command "' + data + '" to ' + adapter.config.ip);
+
+    // Set up the request
+    httpGet(options, function (err, data) {
+        if (adapter.config.ports[port]) {
+            if (adapter.config.ports[port].pty == 4 && adapter.config.ports[port].d == 20) {
+                // Set state only if positive response from megaD
+                adapter.setState(id, value ? true : false, true);
+            } else {
+                // Set state only if positive response from megaD
+                adapter.setState(id, value, true);
+            }
         } else {
             adapter.log.warn('Unknown port ' + port);
         }
@@ -1420,6 +1612,9 @@ function syncObjects() {
             }
             if (adapter.config.ports[p].misc === 'false' || adapter.config.ports[p].misc === false) adapter.config.ports[p].misc = 0;
             if (adapter.config.ports[p].misc === 'true'  || adapter.config.ports[p].misc === true)  adapter.config.ports[p].misc = 1;
+	    if (adapter.config.ports[p].ext !== undefined) {   //EXT
+                adapter.config.ports[p].ext = parseInt(adapter.config.ports[p].ext, 10) || 0;
+            }
 		
             settings.port = p;
 
@@ -1439,6 +1634,14 @@ function syncObjects() {
             var obj5 = null;
             var obj6 = null;
             var obj7 = null;
+	    var obj8 = null;
+            var obj9 = null;
+            var obj10 = null;
+            var obj11 = null;
+            var obj12 = null;
+            var obj13 = null;
+            var obj14 = null;
+            var obj15 = null;	
 
             // input
             if (!settings.pty) {
@@ -1517,7 +1720,7 @@ function syncObjects() {
                     obj.common.max   = 255;
                     if (!obj.common.role) obj.common.role = 'level';
                 } else
-		if (settings.m == 0) {
+		if (settings.m == 0 || settings.m == 3) {
                     obj.common.write = true;
                     obj.common.read  = true;
                     obj.common.def   = false;
@@ -1561,7 +1764,7 @@ function syncObjects() {
                     if (obj1.native.misc !== undefined) delete obj1.native.misc;
                     if (obj1.native.m2 !== undefined) delete obj1.native.m2;
                     if (obj1.native.fr !== undefined) delete obj1.native.fr;
-                    if (obj.native.d !== undefined) delete obj.native.d;
+                    if (obj1.native.d !== undefined) delete obj1.native.d;
                 }
             } else
             // analog ADC
@@ -1816,151 +2019,686 @@ function syncObjects() {
                         },
                         type: 'state'
 		    };
-                } else if (settings.d == 20) { // MCP23008
-                    obj = {
-                        _id: adapter.namespace + '.' + id + '_P0',
-                        common: {
-                            name:  obj.native.name + '_P0',
-                            role:  'button',
-                            write: true,
-                            read:  true,
-                            def:   false,
-                            desc:  'P' + p + ' - digital output P0',
-                            type:  'boolean'
-                        },
-                        native: JSON.parse(JSON.stringify(settings)),
-                        /*native: {
-                        port: p + 'P0',
-                        name: 'P' + p
-                        },*/
-                        type:   'state'
-                    };
-	            obj1 = {
-                        _id: adapter.namespace + '.' + id + '_P1',
-                        common: {
-                            name:  obj.native.name + '_P1',
-                            role:  'button',
-                            write: true,
-                            read:  true,
-                            def:   false,
-                            desc:  'P' + p + ' - digital output P1',
-                            type:  'boolean'
-                        },
-                        native: JSON.parse(JSON.stringify(settings)),
-                        /*native: {
-                        port: p + 'P1',
-                        name: 'P' + p
-                        },*/
-                        type:   'state'
-                    };
-		    obj2 = {
-                        _id: adapter.namespace + '.' + id + '_P2',
-                        common: {
-                            name:  obj.native.name + '_P2',
-                            role:  'button',
-                            write: true,
-                            read:  true,
-                            def:   false,
-                            desc:  'P' + p + ' - digital output P2',
-                            type:  'boolean'
-                        },
-                        native: JSON.parse(JSON.stringify(settings)),
-                        /*native: {
-                        port: p + 'P2',
-                        name: 'P' + p
-                        },*/
-                        type:   'state'
-                    };
-                    obj3 = {
-                        _id: adapter.namespace + '.' + id + '_P3',
-                        common: {
-                            name:  obj.native.name + '_P3',
-                            role:  'button',
-                            write: true,
-                            read:  true,
-                            def:   false,
-                            desc:  'P' + p + ' - digital output P3',
-                            type:  'boolean'
-                        },
-                        native: JSON.parse(JSON.stringify(settings)),
-                        /*native: {
-                        port: p + 'P3',
-			name: 'P' + p
-                        },*/
-                        type:   'state'
-                    };
-                    obj4 = {
-                        _id: adapter.namespace + '.' + id + '_P4',
-                        common: {
-                            name:  obj.native.name + '_P4',
-                            role:  'button',
-                            write: true,
-                            read:  true,
-                            def:   false,
-                            desc:  'P' + p + ' - digital output P4',
-                            type:  'boolean'
-                        },
-                        native: JSON.parse(JSON.stringify(settings)),
-                        /*native: {
-                        port: p + 'P4',
-                        ///name: 'P' + p
-                        },*/
-                        type:   'state'
-                    };
-		    obj5 = {
-                        _id: adapter.namespace + '.' + id + '_P5',
-                        common: {
-                            name:  obj.native.name + '_P5',
-                            role:  'button',
-                            write: true,
-                            read:  true,
-                            def:   false,
-                            desc:  'P' + p + ' - digital output P5',
-                            type:  'boolean'
-                        },
-                        native: JSON.parse(JSON.stringify(settings)),
-                        /*native: {
-                        port: p + 'P5',
-                        ///name: 'P' + p
-                        },*/
-                        type:   'state'
-                    };
-		    obj6 = {
-                        _id: adapter.namespace + '.' + id + '_P6',
-                        common: {
-                            name:  obj.native.name + '_P6',
-                            role:  'button',
-                            write: true,
-                            read:  true,
-                            def:   false,
-                            desc:  'P' + p + ' - digital output P6',
-                            type:  'boolean'
-                        },
-                        native: JSON.parse(JSON.stringify(settings)),
-                        /*native: {
-                        port: p + 'P6',
-                        name: 'P' + p
-                        },*/
-                        type:   'state'
-                    };
-                    obj7 = {
-                        _id: adapter.namespace + '.' + id + '_P7',
-                        common: {
-                            name:  obj.native.name + '_P7',
-                            role:  'button',
-                            write: true,
-                            read:  true,
-                            def:   false,
-                            desc:  'P' + p + ' - digital output P7',
-                            type:  'boolean'
-                        },
-                        native: JSON.parse(JSON.stringify(settings)),
-                        /*native: {
-                        port: p + 'P7',
-			name: 'P' + p
-                        },*/
-                        type:   'state'
-                    };
+                } else if (settings.d == 20) {
+                    if (settings.ext == 8) { // MCP23008
+                        obj = {
+                            _id: adapter.namespace + '.' + id + '_P0',
+                            common: {
+                                name:  obj.native.name + '_P0',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P0',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            ///native: {
+                                ///name: p,
+                                ///port: p + '_P0',
+                                ///ext: p + 'e0',
+                            ///},
+                            type:   'state'
+                        };
+                        if (obj.native.ext !== undefined) obj.native.ext = p + 'e0';
+                        obj1 = {
+                            _id: adapter.namespace + '.' + id + '_P1',
+                            common: {
+                                name:  obj.native.name + '_P1',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P1',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+			if (obj1.native.ext !== undefined) obj1.native.ext = p + 'e1';
+                        obj2 = {
+                            _id: adapter.namespace + '.' + id + '_P2',
+                            common: {
+                                name:  obj.native.name + '_P2',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P2',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+                        if (obj2.native.ext !== undefined) obj2.native.ext = p + 'e2';
+                        obj3 = {
+                            _id: adapter.namespace + '.' + id + '_P3',
+                            common: {
+                                name:  obj.native.name + '_P3',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P3',
+                                type:  'boolean'
+                            },
+		            native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                        };
+                        if (obj3.native.ext !== undefined) obj3.native.ext = p + 'e3';
+                        obj4 = {
+                            _id: adapter.namespace + '.' + id + '_P4',
+                            common: {
+                                name:  obj.native.name + '_P4',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P4',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+                        if (obj4.native.ext !== undefined) obj4.native.ext = p + 'e4';
+                        obj5 = {
+                            _id: adapter.namespace + '.' + id + '_P5',
+                            common: {
+	                        name:  obj.native.name + '_P5',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P5',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+                        if (obj5.native.ext !== undefined) obj5.native.ext = p + 'e5';
+                        obj6 = {
+                            _id: adapter.namespace + '.' + id + '_P6',
+                            common: {
+                                name:  obj.native.name + '_P6',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P6',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+			if (obj6.native.ext !== undefined) obj6.native.ext = p + 'e6';
+                            obj7 = {
+                                _id: adapter.namespace + '.' + id + '_P7',
+                                common: {
+                                    name:  obj.native.name + '_P7',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P7',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj7.native.ext !== undefined) obj7.native.ext = p + 'e7';
+                        } else {
+                            obj = {
+                                _id: adapter.namespace + '.' + id + '_P0',
+                                common: {
+                                    name:  obj.native.name + '_P0',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+					def:   false,
+                                    desc:  'P' + p + ' - digital input/output P0',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                ///native: {
+                                    ///name: p,
+                                    ///port: p + '_P0',
+                                    ///ext : p + 'e0',
+                                ///},
+                                type:   'state'
+                            };
+                            if (obj.native.ext !== undefined) obj.native.ext = p + 'e0';
+                            obj1 = {
+                                _id: adapter.namespace + '.' + id + '_P1',
+                                common: {
+                                    name:  obj.native.name + '_P1',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P1',
+                                    type:  'boolean'
+                                },
+				native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj1.native.ext !== undefined) obj1.native.ext = p + 'e1';
+                            obj2 = {
+                                _id: adapter.namespace + '.' + id + '_P2',
+                                common: {
+                                    name:  obj.native.name + '_P2',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P2',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj2.native.ext !== undefined) obj2.native.ext = p + 'e2';
+                            obj3 = {
+                                _id: adapter.namespace + '.' + id + '_P3',
+                                common: {
+                                    name:  obj.native.name + '_P3',
+                                    role:  'state',
+				    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P3',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj3.native.ext !== undefined) obj3.native.ext = p + 'e3';
+                            obj4 = {
+                                _id: adapter.namespace + '.' + id + '_P4',
+                                common: {
+                                    name:  obj.native.name + '_P4',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P4',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+			    if (obj4.native.ext !== undefined) obj4.native.ext = p + 'e4';
+                            obj5 = {
+                                _id: adapter.namespace + '.' + id + '_P5',
+                                common: {
+                                    name:  obj.native.name + '_P5',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P5',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj5.native.ext !== undefined) obj5.native.ext = p + 'e5';
+                            obj6 = {
+                                _id: adapter.namespace + '.' + id + '_P6',
+                                common: {
+                                    name:  obj.native.name + '_P6',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+				    desc:  'P' + p + ' - digital input/output P6',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj6.native.ext !== undefined) obj6.native.ext = p + 'e6';
+                            obj7 = {
+                                _id: adapter.namespace + '.' + id + '_P7',
+                                common: {
+                                    name:  obj.native.name + '_P7',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P7',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj7.native.ext !== undefined) obj7.native.ext = p + 'e7';
+                            obj8 = {
+                                _id: adapter.namespace + '.' + id + '_P8',
+				common: {
+                                    name:  obj.native.name + '_P8',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P8',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj8.native.ext !== undefined) obj8.native.ext = p + 'e8';
+                            obj9 = {
+                                _id: adapter.namespace + '.' + id + '_P9',
+                                common: {
+                                    name:  obj.native.name + '_P9',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P9',
+                                    type:  'boolean'
+                                },
+				native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj9.native.ext !== undefined) obj9.native.ext = p + 'e9';
+                            obj10 = {
+                                _id: adapter.namespace + '.' + id + '_P10',
+                                common: {
+                                    name:  obj.native.name + '_P10',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P10',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj10.native.ext !== undefined) obj10.native.ext = p + 'e10';
+                            obj11 = {
+                                _id: adapter.namespace + '.' + id + '_P11',
+                                common: {
+                                    name:  obj.native.name + '_P11',
+                                    role:  'state',
+				write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P11',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj11.native.ext !== undefined) obj11.native.ext = p + 'e11';
+                            obj12 = {
+                                _id: adapter.namespace + '.' + id + '_P12',
+                                common: {
+                                    name:  obj.native.name + '_P12',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P12',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+			    	if (obj12.native.ext !== undefined) obj12.native.ext = p + 'e12';
+                            obj13 = {
+                                _id: adapter.namespace + '.' + id + '_P13',
+                                common: {
+                                    name:  obj.native.name + '_P13',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P13',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj13.native.ext !== undefined) obj13.native.ext = p + 'e13';
+                            obj14 = {
+                                _id: adapter.namespace + '.' + id + '_P14',
+                                common: {
+                                    name:  obj.native.name + '_P14',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+				desc:  'P' + p + ' - digital input/output P14',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj14.native.ext !== undefined) obj14.native.ext = p + 'e14';
+                            obj15 = {
+                                _id: adapter.namespace + '.' + id + '_P15',
+                                common: {
+                                    name:  obj.native.name + '_P15',
+                                    role:  'state',
+                                    write: true,
+                                    read:  true,
+                                    def:   false,
+                                    desc:  'P' + p + ' - digital input/output P15',
+                                    type:  'boolean'
+                                },
+                                native: JSON.parse(JSON.stringify(settings)),
+                                type:   'state'
+                            };
+                            if (obj15.native.ext !== undefined) obj15.native.ext = p + 'e15';
+                        }
+                    } else if (settings.d == 21) {   // PCA9685
+			obj = {
+                            _id: adapter.namespace + '.' + id + '_P0',
+                            common: {
+                                name:  obj.native.name + '_P0',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P0' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            ///native: {
+                                ///port: p ,
+                                ///name: 'P' + p,
+                                ///ext: p + 'e0',
+                            ///},
+                            type:   'state'
+                        };
+                        obj.native.ext = p + 'e0';
+                        obj1 = {
+                            _id: adapter.namespace + '.' + id + '_P1',
+                            common: {
+                                name:  obj.native.name + '_P1',
+				 role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P1' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e1',
+                            },
+                            type:   'state'
+                        };
+                        obj2 = {
+                            _id: adapter.namespace + '.' + id + '_P2',
+                            common: {
+                                name:  obj.native.name + '_P2',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P2' + ' - digital output (PWM)',
+				type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e2',
+                            },
+                            type:   'state'
+                        };
+                        obj3 = {
+                            _id: adapter.namespace + '.' + id + '_P3',
+                            common: {
+                                name:  obj.native.name + '_P3',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P3' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+				name: 'P' + p,
+                                ext: p + 'e3',
+                            },
+                            type:   'state'
+                        };
+                        obj4 = {
+                            _id: adapter.namespace + '.' + id + '_P4',
+                            common: {
+                                name:  obj.native.name + '_P4',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P4' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e4',
+                            },
+                            type:   'state'
+                        };
+			obj5 = {
+                            _id: adapter.namespace + '.' + id + '_P5',
+                            common: {
+                                name:  obj.native.name + '_P5',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P5' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e5',
+                            },
+                            type:   'state'
+                        };
+                        obj6 = {
+                            _id: adapter.namespace + '.' + id + '_P6',
+                            common: {
+                                name:  obj.native.name + '_P6',
+                                role:  'level',
+				write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P6' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e6',
+                            },
+                            type:   'state'
+                        };
+                        obj7 = {
+                            _id: adapter.namespace + '.' + id + '_P7',
+                            common: {
+                                name:  obj.native.name + '_P7',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P7' + ' - digital output (PWM)',
+				type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e7',
+                            },
+                            type:   'state'
+                        };
+                        obj8 = {
+                            _id: adapter.namespace + '.' + id + '_P8',
+                            common: {
+                                name:  obj.native.name + '_P8',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P8' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+				name: 'P' + p,
+                                ext: p + 'e8',
+                            },
+                            type:   'state'
+                        };
+                        obj9 = {
+                            _id: adapter.namespace + '.' + id + '_P9',
+                            common: {
+                                name:  obj.native.name + '_P9',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P9' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e9',
+                            },
+                            type:   'state'
+                        };
+			obj10 = {
+                            _id: adapter.namespace + '.' + id + '_P10',
+                            common: {
+                                name:  obj.native.name + '_P10',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P10' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e10',
+                            },
+                            type:   'state'
+                        };
+                        obj11 = {
+                            _id: adapter.namespace + '.' + id + '_P11',
+                            common: {
+                                name:  obj.native.name + '_P11',
+                                role:  'level',
+				write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P11' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e11',
+                            },
+                            type:   'state'
+                        };
+                        obj12 = {
+                            _id: adapter.namespace + '.' + id + '_P12',
+                            common: {
+                                name:  obj.native.name + '_P12',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P12' + ' - digital output (PWM)',
+                                type:  'number'
+				},
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e12',
+                            },
+                            type:   'state'
+                        };
+                        obj13 = {
+                            _id: adapter.namespace + '.' + id + '_P13',
+                            common: {
+                                name:  obj.native.name + '_P13',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P13' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+				 ext: p + 'e13',
+                            },
+                            type:   'state'
+                        };
+                        obj14 = {
+                            _id: adapter.namespace + '.' + id + '_P14',
+                            common: {
+                                name:  obj.native.name + '_P14',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P14' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e14',
+                            },
+                            type:   'state'
+                        };
+                        obj15 = {
+				_id: adapter.namespace + '.' + id + '_P15',
+                            common: {
+                                name:  obj.native.name + '_P15',
+                                role:  'level',
+                                write: true,
+                                read:  true,
+                                def:   0,
+                                desc:  'P' + p + '_P15' + ' - digital output (PWM)',
+                                type:  'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p ,
+                                name: 'P' + p,
+                                ext: p + 'e15',
+                            },
+                            type:   'state'
+                        };
 		}
             } else {
                 continue;
@@ -1996,6 +2734,38 @@ function syncObjects() {
             if (obj7) {
                 newObjects.push(obj7);
                 ports[obj7._id] = obj7;
+            }
+	    if (obj8) {
+                newObjects.push(obj8);
+                ports[obj8._id] = obj8;
+            }
+            if (obj9) {
+                newObjects.push(obj9);
+                ports[obj9._id] = obj9;
+            }
+            if (obj10) {
+                newObjects.push(obj10);
+                ports[obj10._id] = obj10;
+            }
+            if (obj11) {
+                newObjects.push(obj11);
+                ports[obj11._id] = obj11;
+            }
+            if (obj12) {
+                newObjects.push(obj12);
+                ports[obj12._id] = obj12;
+            }
+            if (obj13) {
+                newObjects.push(obj13);
+                ports[obj13._id] = obj13;
+            }
+            if (obj14) {
+                newObjects.push(obj14);
+                ports[obj14._id] = obj14;
+            }
+            if (obj15) {
+                newObjects.push(obj15);
+                ports[obj15._id] = obj15;
             }
         }
     }
@@ -2075,6 +2845,14 @@ function syncObjects() {
                 break;
             }
 	}
+	
+	// if EXT
+        for (var po = 0; po < adapter.config.ports.length; po++) {
+            if (adapter.config.ports[po].pty == 4 && (adapter.config.ports[po].d == 20 || adapter.config.ports[po].d == 21)) {
+                askEXTport = true;
+                break;
+            }
+        }    
 
         if (adapter.config.ip && adapter.config.ip !== '0.0.0.0') {
             pollStatus();
