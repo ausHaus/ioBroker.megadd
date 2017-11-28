@@ -1,8 +1,13 @@
 {
     "common": {
         "name":                     "megadd",
-        "version":                  "0.2.2",
+        "version":                  "0.3.0",
         "news": {
+	    "0.3.0": {
+                "en":               "add I2C Bus port expander (MC23008, MC23017, PCA9685)",
+                "de":               "add I2C Bus port expander (MC23008, MC23017, PCA9685)",
+                "ru":               "add I2C Bus port expander (MC23008, MC23017, PCA9685)"
+            },	
 	    "0.2.2": {
                 "en":               "add display settings (Bright)",
                 "de":               "add display settings (Bright)",
@@ -31,7 +36,7 @@
         "messagebox":               true,
         "readme":                   "https://github.com/ausHaus/ioBroker.megadd/blob/master/README.md",
         "keywords":                 ["MegaD-2561", "communication"],
-		"enabled":                  true,
+	"enabled":                  true,
         "extIcon":                  "https://raw.githubusercontent.com/ausHaus/ioBroker.megadd/master/admin/megad.png",
         "type":                     "hardware",
         "localLink":                "http://%native_ip%/%password%",
