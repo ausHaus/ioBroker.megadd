@@ -166,6 +166,14 @@ function processMessage(message) {
     }
     port = message.pt;
 
+    for (var i = 0; i < adapter.config.ports.length; i++) {
+        if (adapter.config.ports[i].pty == 4 && adapter.config.ports[i].d == 20) {
+            if (port == adapter.config.ports[i].inta) {
+                port = i;
+            }
+        }
+    }
+
     // Command from instance with web server
     if (adapter.config.ports[port]) {
         // If digital port
@@ -1111,7 +1119,7 @@ function processPortState(_port, value) {
                     adapter.setState(_ports[_port].id + '_humidity', {val: secondary, ack: true, q: q});
                 }
             } else
-            if (_ports[_port].pty == 4) {
+            if (_ports[_port].pty == 4 && _ports[_port].m == 1) {
                 if (_ports[_port].value !== value || _ports[_port].q !== q) {
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
                 }
@@ -1612,6 +1620,7 @@ function syncObjects() {
             }
             if (adapter.config.ports[p].misc === 'false' || adapter.config.ports[p].misc === false) adapter.config.ports[p].misc = 0;
             if (adapter.config.ports[p].misc === 'true'  || adapter.config.ports[p].misc === true)  adapter.config.ports[p].misc = 1;
+
 	    if (adapter.config.ports[p].ext !== undefined) {   //EXT
                 adapter.config.ports[p].ext = parseInt(adapter.config.ports[p].ext, 10) || 0;
             }
@@ -1894,7 +1903,7 @@ function syncObjects() {
 		}    
             } else
             // I2C sensor
-            if (settings.pty == 4) {
+            if (settings.pty == 4 && settings.m == 1) {
                 ///obj.common.write = false;
                 ///obj.common.read  = true;
                 ///obj.common.def   = 0;
@@ -1909,27 +1918,25 @@ function syncObjects() {
                     obj.common.desc = 'P' + p + ' - temperature';
                     obj.common.type = 'number';
                     if (!obj.common.role) obj.common.role = 'value.temperature';
-		    if (settings.d == 1) {
-                        obj1 = {
-                            _id: adapter.namespace + '.' + id + '_humidity',
-                            common: {
-                                name: obj.common.name + '_humidity',
-                                role: 'value.humidity',
-                                write: false,
-                                read: true,
-                                unit: '%',
-                                def: 0,
-                                min: 0,
-                                max: 100,
-                                desc: 'P' + p + ' - humidity',
-				type: 'number'
-                            },
-                            native: {
-                                port: p
-                            },
-                            type: 'state'
-                        };
-                    }
+		    obj1 = {
+                        _id: adapter.namespace + '.' + id + '_humidity',
+                        common: {
+                            name: obj.common.name + '_humidity',
+                            role: 'value.humidity',
+                            write: false,
+                            read: true,
+                            unit: '%',
+                            def: 0,
+                            min: 0,
+                            max: 100,
+                            desc: 'P' + p + ' - humidity',
+			    type: 'number'
+                        },
+                        native: {
+                            port: p
+                        },
+                        type: 'state'
+                    };
                 } else if (settings.d == 2 || settings.d == 3) { // Light Sensors
 	            obj.common.write = false;
                     obj.common.read  = true;
@@ -1937,7 +1944,7 @@ function syncObjects() {
                     obj.common.type = 'number';
                     obj.common.def  = 0;
                     obj.common.role = 'value.light';
-	        } else if (settings.d == 4 || settings.m == 2) { // Display or I2C SDC port
+	        } else if (settings.d == 4) { // Display
                     obj.common.write = false;
                     obj.common.read  = false;
 		    obj.common.type = 'state';
@@ -2131,574 +2138,574 @@ function syncObjects() {
                             type:   'state'
                         };
 			if (obj6.native.ext !== undefined) obj6.native.ext = p + 'e6';
-                            obj7 = {
-                                _id: adapter.namespace + '.' + id + '_P7',
-                                common: {
-                                    name:  obj.native.name + '_P7',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P7',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj7.native.ext !== undefined) obj7.native.ext = p + 'e7';
-                        } else {
-                            obj = {
-                                _id: adapter.namespace + '.' + id + '_P0',
-                                common: {
-                                    name:  obj.native.name + '_P0',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-					def:   false,
-                                    desc:  'P' + p + ' - digital input/output P0',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                ///native: {
-                                    ///name: p,
-                                    ///port: p + '_P0',
-                                    ///ext : p + 'e0',
-                                ///},
-                                type:   'state'
-                            };
-                            if (obj.native.ext !== undefined) obj.native.ext = p + 'e0';
-                            obj1 = {
-                                _id: adapter.namespace + '.' + id + '_P1',
-                                common: {
-                                    name:  obj.native.name + '_P1',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P1',
-                                    type:  'boolean'
-                                },
-				native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj1.native.ext !== undefined) obj1.native.ext = p + 'e1';
-                            obj2 = {
-                                _id: adapter.namespace + '.' + id + '_P2',
-                                common: {
-                                    name:  obj.native.name + '_P2',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P2',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj2.native.ext !== undefined) obj2.native.ext = p + 'e2';
-                            obj3 = {
-                                _id: adapter.namespace + '.' + id + '_P3',
-                                common: {
-                                    name:  obj.native.name + '_P3',
-                                    role:  'state',
-				    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P3',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj3.native.ext !== undefined) obj3.native.ext = p + 'e3';
-                            obj4 = {
-                                _id: adapter.namespace + '.' + id + '_P4',
-                                common: {
-                                    name:  obj.native.name + '_P4',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P4',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-			    if (obj4.native.ext !== undefined) obj4.native.ext = p + 'e4';
-                            obj5 = {
-                                _id: adapter.namespace + '.' + id + '_P5',
-                                common: {
-                                    name:  obj.native.name + '_P5',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P5',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj5.native.ext !== undefined) obj5.native.ext = p + 'e5';
-                            obj6 = {
-                                _id: adapter.namespace + '.' + id + '_P6',
-                                common: {
-                                    name:  obj.native.name + '_P6',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-				    desc:  'P' + p + ' - digital input/output P6',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj6.native.ext !== undefined) obj6.native.ext = p + 'e6';
-                            obj7 = {
-                                _id: adapter.namespace + '.' + id + '_P7',
-                                common: {
-                                    name:  obj.native.name + '_P7',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P7',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj7.native.ext !== undefined) obj7.native.ext = p + 'e7';
-                            obj8 = {
-                                _id: adapter.namespace + '.' + id + '_P8',
-				common: {
-                                    name:  obj.native.name + '_P8',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P8',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj8.native.ext !== undefined) obj8.native.ext = p + 'e8';
-                            obj9 = {
-                                _id: adapter.namespace + '.' + id + '_P9',
-                                common: {
-                                    name:  obj.native.name + '_P9',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P9',
-                                    type:  'boolean'
-                                },
-				native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj9.native.ext !== undefined) obj9.native.ext = p + 'e9';
-                            obj10 = {
-                                _id: adapter.namespace + '.' + id + '_P10',
-                                common: {
-                                    name:  obj.native.name + '_P10',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P10',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj10.native.ext !== undefined) obj10.native.ext = p + 'e10';
-                            obj11 = {
-                                _id: adapter.namespace + '.' + id + '_P11',
-                                common: {
-                                    name:  obj.native.name + '_P11',
-                                    role:  'state',
-				write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P11',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj11.native.ext !== undefined) obj11.native.ext = p + 'e11';
-                            obj12 = {
-                                _id: adapter.namespace + '.' + id + '_P12',
-                                common: {
-                                    name:  obj.native.name + '_P12',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P12',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-			    	if (obj12.native.ext !== undefined) obj12.native.ext = p + 'e12';
-                            obj13 = {
-                                _id: adapter.namespace + '.' + id + '_P13',
-                                common: {
-                                    name:  obj.native.name + '_P13',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P13',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj13.native.ext !== undefined) obj13.native.ext = p + 'e13';
-                            obj14 = {
-                                _id: adapter.namespace + '.' + id + '_P14',
-                                common: {
-                                    name:  obj.native.name + '_P14',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-				desc:  'P' + p + ' - digital input/output P14',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj14.native.ext !== undefined) obj14.native.ext = p + 'e14';
-                            obj15 = {
-                                _id: adapter.namespace + '.' + id + '_P15',
-                                common: {
-                                    name:  obj.native.name + '_P15',
-                                    role:  'state',
-                                    write: true,
-                                    read:  true,
-                                    def:   false,
-                                    desc:  'P' + p + ' - digital input/output P15',
-                                    type:  'boolean'
-                                },
-                                native: JSON.parse(JSON.stringify(settings)),
-                                type:   'state'
-                            };
-                            if (obj15.native.ext !== undefined) obj15.native.ext = p + 'e15';
-                        }
-                    } else if (settings.d == 21) {   // PCA9685
-			obj = {
-                            _id: adapter.namespace + '.' + id + '_P0',
-                            common: {
-                                name:  obj.native.name + '_P0',
-                                role:  'level',
-                                write: true,
-                                read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P0' + ' - digital output (PWM)',
-                                type:  'number'
-                            },
-                            native: JSON.parse(JSON.stringify(settings)),
-                            ///native: {
-                                ///port: p ,
-                                ///name: 'P' + p,
-                                ///ext: p + 'e0',
-                            ///},
-                            type:   'state'
-                        };
-                        obj.native.ext = p + 'e0';
-                        obj1 = {
-                            _id: adapter.namespace + '.' + id + '_P1',
-                            common: {
-                                name:  obj.native.name + '_P1',
-				 role:  'level',
-                                write: true,
-                                read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P1' + ' - digital output (PWM)',
-                                type:  'number'
-                            },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e1',
-                            },
-                            type:   'state'
-                        };
-                        obj2 = {
-                            _id: adapter.namespace + '.' + id + '_P2',
-                            common: {
-                                name:  obj.native.name + '_P2',
-                                role:  'level',
-                                write: true,
-                                read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P2' + ' - digital output (PWM)',
-				type:  'number'
-                            },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e2',
-                            },
-                            type:   'state'
-                        };
-                        obj3 = {
-                            _id: adapter.namespace + '.' + id + '_P3',
-                            common: {
-                                name:  obj.native.name + '_P3',
-                                role:  'level',
-                                write: true,
-                                read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P3' + ' - digital output (PWM)',
-                                type:  'number'
-                            },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-				name: 'P' + p,
-                                ext: p + 'e3',
-                            },
-                            type:   'state'
-                        };
-                        obj4 = {
-                            _id: adapter.namespace + '.' + id + '_P4',
-                            common: {
-                                name:  obj.native.name + '_P4',
-                                role:  'level',
-                                write: true,
-                                read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P4' + ' - digital output (PWM)',
-                                type:  'number'
-                            },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e4',
-                            },
-                            type:   'state'
-                        };
-			obj5 = {
-                            _id: adapter.namespace + '.' + id + '_P5',
-                            common: {
-                                name:  obj.native.name + '_P5',
-                                role:  'level',
-                                write: true,
-                                read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P5' + ' - digital output (PWM)',
-                                type:  'number'
-                            },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e5',
-                            },
-                            type:   'state'
-                        };
-                        obj6 = {
-                            _id: adapter.namespace + '.' + id + '_P6',
-                            common: {
-                                name:  obj.native.name + '_P6',
-                                role:  'level',
-				write: true,
-                                read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P6' + ' - digital output (PWM)',
-                                type:  'number'
-                            },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e6',
-                            },
-                            type:   'state'
-                        };
                         obj7 = {
                             _id: adapter.namespace + '.' + id + '_P7',
                             common: {
                                 name:  obj.native.name + '_P7',
-                                role:  'level',
+                                role:  'state',
                                 write: true,
                                 read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P7' + ' - digital output (PWM)',
-				type:  'number'
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P7',
+                                type:  'boolean'
                             },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e7',
-                            },
+                            native: JSON.parse(JSON.stringify(settings)),
                             type:   'state'
                         };
+                        if (obj7.native.ext !== undefined) obj7.native.ext = p + 'e7';
+                    } else {
+                        obj = {
+                            _id: adapter.namespace + '.' + id + '_P0',
+                            common: {
+                                name:  obj.native.name + '_P0',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+			        def:   false,
+                                desc:  'P' + p + ' - digital input/output P0',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            ///native: {
+                                ///name: p,
+                                ///port: p + '_P0',
+                                ///ext : p + 'e0',
+                            ///},
+                            type:   'state'
+                        };
+                        if (obj.native.ext !== undefined) obj.native.ext = p + 'e0';
+                        obj1 = {
+                            _id: adapter.namespace + '.' + id + '_P1',
+                            common: {
+                                name:  obj.native.name + '_P1',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P1',
+                                type:  'boolean'
+                            },
+			    native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+                        if (obj1.native.ext !== undefined) obj1.native.ext = p + 'e1';
+                        obj2 = {
+                            _id: adapter.namespace + '.' + id + '_P2',
+                            common: {
+                                name:  obj.native.name + '_P2',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P2',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+                        if (obj2.native.ext !== undefined) obj2.native.ext = p + 'e2';
+                        obj3 = {
+                            _id: adapter.namespace + '.' + id + '_P3',
+                            common: {
+                                name:  obj.native.name + '_P3',
+                                role:  'state',
+			        write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P3',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+                        if (obj3.native.ext !== undefined) obj3.native.ext = p + 'e3';
+                        obj4 = {
+                            _id: adapter.namespace + '.' + id + '_P4',
+                            common: {
+                                name:  obj.native.name + '_P4',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P4',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+			if (obj4.native.ext !== undefined) obj4.native.ext = p + 'e4';
+                        obj5 = {
+                            _id: adapter.namespace + '.' + id + '_P5',
+                            common: {
+                                name:  obj.native.name + '_P5',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P5',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+                        if (obj5.native.ext !== undefined) obj5.native.ext = p + 'e5';
+                        obj6 = {
+                            _id: adapter.namespace + '.' + id + '_P6',
+                            common: {
+                                name:  obj.native.name + '_P6',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+			        desc:  'P' + p + ' - digital input/output P6',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+                        if (obj6.native.ext !== undefined) obj6.native.ext = p + 'e6';
+                        obj7 = {
+                            _id: adapter.namespace + '.' + id + '_P7',
+                            common: {
+                                name:  obj.native.name + '_P7',
+                                role:  'state',
+                                write: true,
+                                read:  true,
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P7',
+                                type:  'boolean'
+                            },
+                            native: JSON.parse(JSON.stringify(settings)),
+                            type:   'state'
+                        };
+                        if (obj7.native.ext !== undefined) obj7.native.ext = p + 'e7';
                         obj8 = {
                             _id: adapter.namespace + '.' + id + '_P8',
-                            common: {
+			    common: {
                                 name:  obj.native.name + '_P8',
-                                role:  'level',
+                                role:  'state',
                                 write: true,
                                 read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P8' + ' - digital output (PWM)',
-                                type:  'number'
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P8',
+                                type:  'boolean'
                             },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-				name: 'P' + p,
-                                ext: p + 'e8',
-                            },
+                            native: JSON.parse(JSON.stringify(settings)),
                             type:   'state'
                         };
+                        if (obj8.native.ext !== undefined) obj8.native.ext = p + 'e8';
                         obj9 = {
                             _id: adapter.namespace + '.' + id + '_P9',
                             common: {
                                 name:  obj.native.name + '_P9',
-                                role:  'level',
+                                role:  'state',
                                 write: true,
                                 read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P9' + ' - digital output (PWM)',
-                                type:  'number'
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P9',
+                                type:  'boolean'
                             },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e9',
-                            },
+		            native: JSON.parse(JSON.stringify(settings)),
                             type:   'state'
                         };
-			obj10 = {
+                        if (obj9.native.ext !== undefined) obj9.native.ext = p + 'e9';
+                        obj10 = {
                             _id: adapter.namespace + '.' + id + '_P10',
                             common: {
                                 name:  obj.native.name + '_P10',
-                                role:  'level',
+                                role:  'state',
                                 write: true,
                                 read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P10' + ' - digital output (PWM)',
-                                type:  'number'
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P10',
+                                type:  'boolean'
                             },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e10',
-                            },
+                            native: JSON.parse(JSON.stringify(settings)),
                             type:   'state'
                         };
+                        if (obj10.native.ext !== undefined) obj10.native.ext = p + 'e10';
                         obj11 = {
                             _id: adapter.namespace + '.' + id + '_P11',
                             common: {
                                 name:  obj.native.name + '_P11',
-                                role:  'level',
+                                role:  'state',
 				write: true,
                                 read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P11' + ' - digital output (PWM)',
-                                type:  'number'
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P11',
+                                type:  'boolean'
                             },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e11',
-                            },
+                            native: JSON.parse(JSON.stringify(settings)),
                             type:   'state'
                         };
+                        if (obj11.native.ext !== undefined) obj11.native.ext = p + 'e11';
                         obj12 = {
                             _id: adapter.namespace + '.' + id + '_P12',
                             common: {
                                 name:  obj.native.name + '_P12',
-                                role:  'level',
+                                role:  'state',
                                 write: true,
                                 read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P12' + ' - digital output (PWM)',
-                                type:  'number'
-				},
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e12',
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P12',
+                                type:  'boolean'
                             },
+                            native: JSON.parse(JSON.stringify(settings)),
                             type:   'state'
                         };
+			if (obj12.native.ext !== undefined) obj12.native.ext = p + 'e12';
                         obj13 = {
                             _id: adapter.namespace + '.' + id + '_P13',
                             common: {
                                 name:  obj.native.name + '_P13',
-                                role:  'level',
+                                role:  'state',
                                 write: true,
                                 read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P13' + ' - digital output (PWM)',
-                                type:  'number'
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P13',
+                                type:  'boolean'
                             },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-				 ext: p + 'e13',
-                            },
+                            native: JSON.parse(JSON.stringify(settings)),
                             type:   'state'
                         };
+                        if (obj13.native.ext !== undefined) obj13.native.ext = p + 'e13';
                         obj14 = {
                             _id: adapter.namespace + '.' + id + '_P14',
                             common: {
                                 name:  obj.native.name + '_P14',
-                                role:  'level',
+                                role:  'state',
                                 write: true,
                                 read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P14' + ' - digital output (PWM)',
-                                type:  'number'
+                                def:   false,
+			        desc:  'P' + p + ' - digital input/output P14',
+                                type:  'boolean'
                             },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e14',
-                            },
+                            native: JSON.parse(JSON.stringify(settings)),
                             type:   'state'
                         };
+                        if (obj14.native.ext !== undefined) obj14.native.ext = p + 'e14';
                         obj15 = {
-				_id: adapter.namespace + '.' + id + '_P15',
+                            _id: adapter.namespace + '.' + id + '_P15',
                             common: {
                                 name:  obj.native.name + '_P15',
-                                role:  'level',
+                                role:  'state',
                                 write: true,
                                 read:  true,
-                                def:   0,
-                                desc:  'P' + p + '_P15' + ' - digital output (PWM)',
-                                type:  'number'
+                                def:   false,
+                                desc:  'P' + p + ' - digital input/output P15',
+                                type:  'boolean'
                             },
-                            ///native: JSON.parse(JSON.stringify(settings)),
-                            native: {
-                                port: p ,
-                                name: 'P' + p,
-                                ext: p + 'e15',
-                            },
+                            native: JSON.parse(JSON.stringify(settings)),
                             type:   'state'
                         };
+                        if (obj15.native.ext !== undefined) obj15.native.ext = p + 'e15';
+                    }
+                } else if (settings.d == 21) {   // PCA9685
+		    obj = {
+                        _id: adapter.namespace + '.' + id + '_P0',
+                        common: {
+                            name:  obj.native.name + '_P0',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P0' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e0',
+                        },
+                        type:   'state'
+                    };
+                    obj.native.ext = p + 'e0';
+                    obj1 = {
+                        _id: adapter.namespace + '.' + id + '_P1',
+                        common: {
+                            name:  obj.native.name + '_P1',
+			    role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P1' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e1',
+                        },
+                        type:   'state'
+                    };
+                    obj2 = {
+                        _id: adapter.namespace + '.' + id + '_P2',
+                        common: {
+                            name:  obj.native.name + '_P2',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P2' + ' - digital output (PWM)',
+			    type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e2',
+                        },
+                        type:   'state'
+                    };
+                    obj3 = {
+                        _id: adapter.namespace + '.' + id + '_P3',
+                        common: {
+                            name:  obj.native.name + '_P3',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P3' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+			    name: 'P' + p,
+                            ext: p + 'e3',
+                        },
+                        type:   'state'
+                    };
+                    obj4 = {
+                        _id: adapter.namespace + '.' + id + '_P4',
+                        common: {
+                            name:  obj.native.name + '_P4',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P4' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e4',
+                        },
+                        type:   'state'
+                    };
+		    obj5 = {
+                        _id: adapter.namespace + '.' + id + '_P5',
+                        common: {
+                            name:  obj.native.name + '_P5',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P5' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e5',
+                        },
+                        type:   'state'
+                    };
+                    obj6 = {
+                        _id: adapter.namespace + '.' + id + '_P6',
+                        common: {
+                            name:  obj.native.name + '_P6',
+                            role:  'level',
+			    write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P6' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e6',
+                        },
+                        type:   'state'
+                    };
+                    obj7 = {
+                        _id: adapter.namespace + '.' + id + '_P7',
+                        common: {
+                            name:  obj.native.name + '_P7',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P7' + ' - digital output (PWM)',
+			    type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e7',
+                        },
+                        type:   'state'
+                    };
+                    obj8 = {
+                        _id: adapter.namespace + '.' + id + '_P8',
+                        common: {
+                            name:  obj.native.name + '_P8',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P8' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+			    name: 'P' + p,
+                            ext: p + 'e8',
+                        },
+                        type:   'state'
+                    };
+                    obj9 = {
+                        _id: adapter.namespace + '.' + id + '_P9',
+                        common: {
+                            name:  obj.native.name + '_P9',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P9' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e9',
+                        },
+                        type:   'state'
+                    };
+		    obj10 = {
+                        _id: adapter.namespace + '.' + id + '_P10',
+                        common: {
+                            name:  obj.native.name + '_P10',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P10' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e10',
+                        },
+                        type:   'state'
+                    };
+                    obj11 = {
+                        _id: adapter.namespace + '.' + id + '_P11',
+                        common: {
+                            name:  obj.native.name + '_P11',
+                            role:  'level',
+			    write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P11' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e11',
+                        },
+                        type:   'state'
+                    };
+                    obj12 = {
+                        _id: adapter.namespace + '.' + id + '_P12',
+                        common: {
+                            name:  obj.native.name + '_P12',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P12' + ' - digital output (PWM)',
+                            type:  'number'
+			},
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e12',
+                        },
+                        type:   'state'
+                    };
+                    obj13 = {
+                        _id: adapter.namespace + '.' + id + '_P13',
+                        common: {
+                            name:  obj.native.name + '_P13',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P13' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+			    ext: p + 'e13',
+                        },
+                        type:   'state'
+                    };
+                    obj14 = {
+                        _id: adapter.namespace + '.' + id + '_P14',
+                        common: {
+                            name:  obj.native.name + '_P14',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P14' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e14',
+                        },
+                        type:   'state'
+                    };
+                    obj15 = {
+			_id: adapter.namespace + '.' + id + '_P15',
+                        common: {
+                            name:  obj.native.name + '_P15',
+                            role:  'level',
+                            write: true,
+                            read:  true,
+                            def:   0,
+                            desc:  'P' + p + '_P15' + ' - digital output (PWM)',
+                            type:  'number'
+                        },
+                        ///native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                            port: p ,
+                            name: 'P' + p,
+                            ext: p + 'e15',
+                        },
+                        type:   'state'
+                    };
 		}
             } else {
                 continue;
