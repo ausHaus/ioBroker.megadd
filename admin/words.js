@@ -55,6 +55,7 @@ systemDictionary = {
     "Display:":             {"en": "Display port:",         "de": "Anzeigen port:",             "ru": "Дисплей порт:"},
     "Bright:":              {"en": "Bright:",               "de": "Helligkeit:",                "ru": "Яркость:"},
     "INT:":                 {"en": "INT port:",             "de": "INT port:",                  "ru": "INT порт:"},
+    "IN/OUT:":              {"en": "IN/OUT:",               "de": "IN/OUT:",                    "ru": "IN/OUT:"},
     "Group:":               {"en": "Group index:",          "de": "Konzernindex:",              "ru": "Групповой индекс:"},
     "not monitored":        {"en": "not monitored",         "de": "nicht beobachtet",           "ru": "не наблюдать"},
     "> threshold":          {"en": "> threshold",           "de": "> Schwellwert",              "ru": "> порога"},
