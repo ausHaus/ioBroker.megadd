@@ -1,8 +1,13 @@
 {
     "common": {
         "name":                     "megadd",
-        "version":                  "0.3.0",
+        "version":                  "0.3.1",
         "news": {
+	    "0.2.0": {
+                "en":               "small fix",
+                "de":               "small fix",
+                "ru":               "small fix"
+            },
 	    "0.3.0": {
                 "en":               "add I2C Bus port expander (MC23008, MC23017, PCA9685)",
                 "de":               "add I2C Bus port expander (MC23008, MC23017, PCA9685)",
