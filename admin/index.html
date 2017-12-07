@@ -152,7 +152,7 @@
                 text += '<option value="0" ' + ((portSettings.d == 0) ? 'selected' : '') + '>' + _('off') + '</option>';
                 text += '<option value="1" ' + ((portSettings.d == 1) ? 'selected' : '') + '>' + _('on') + '</option>';
                 text += '</select>';
-            } else if (portSettings.m == 1) {
+            } else if (portSettings.m == 1 || portSettings.m == 3) {
                 text += _('Default state:') + ' <input class="tvalue" data-type="d" type="text" data-port="' + index + '" value="' + (portSettings.d || 0) + '" size=4 maxsize="3"/>';
             }   
         } else if (portSettings.pty == 0) {
