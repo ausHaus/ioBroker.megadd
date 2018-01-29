@@ -1805,7 +1805,7 @@ function syncObjects() {
                 obj.native.threshold = settings.offset + settings.factor * settings.misc;
             } else
             // digital temperature sensor
-            if (settings.pty == 3) {
+            if (settings.pty == 3 && settings.d != 6) {
                 obj.common.write = false;
                 obj.common.read  = true;
                 obj.common.def   = 0;
@@ -1907,14 +1907,16 @@ function syncObjects() {
                         },
                         type: 'state'
 		    };
-                } else if (settings.d == 6) { // Wiegand 26
-		    obj.common.write = false;
-                    obj.common.read  = true;
-                    obj.common.desc = 'P' + p + ' - wiegand 26';
-                    obj.common.type = 'string';
-                    obj.common.def  = '';
-		}    
+                }
             } else
+            if (settings.pty == 3 && settings.d == 6 && settings.m == 1) {  // Wiegand 26
+                obj.common.write = false;
+                obj.common.read  = true;
+                obj.common.desc = 'P' + p + ' - wiegand 26';
+                obj.common.type = 'string';
+                obj.common.def  = '';
+                
+            } else	    
             // I2C sensor
             if (settings.pty == 4 && settings.m == 1) {
                 ///obj.common.write = false;
