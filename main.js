@@ -181,8 +181,8 @@ function processMessage(message) {
         if (!adapter.config.ports[port].pty && adapter.config.ports[port].misc != 1) {
             adapter.config.ports[port].value = !adapter.config.ports[port].m ? 1 : 0;
             processClick(port);
-        } else if (adapter.config.ports[port].pty == 3 && adapter.config.ports[port].d == 4) {
-            // process iButton
+        } else if (adapter.config.ports[port].pty == 3 && (adapter.config.ports[port].d == 4 || adapter.config.ports[port].d == 6)) {
+            // process iButton  or Wiegand26
             adapter.setState(adapter.config.ports[port].id, message.val, true);
 	} else if (adapter.config.ports[port].pty == 4 && adapter.config.ports[port].d == 20) {
             adapter.log.debug('reported new value for port ' + port + ', request actual value');
@@ -306,12 +306,18 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
             }
         }
         if (settings.d == 6) {
-            options.path += '&m=' + (settings.m || 0);
+            options.path += '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=' + encodeURIComponent((settings.eth || '').trim());
+            if (settings.af == 1) {
+                options.path += '&af=1';
+            }
+            if (settings.naf == 1) {
+                options.path += '&naf=1';
+            }
         }
     } else
     if (settings.pty === 4) {
-        if (settings.hst > 254) settings.hst = 254;
-        if (settings.hst < 2)   settings.hst = 2;
+        ///if (settings.hst > 254) settings.hst = 254;
+        ///if (settings.hst < 2)   settings.hst = 2;
 
         // I2C
         options.path += '&pty=4' + '&m=' + (settings.m || 0);
@@ -319,6 +325,13 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
             options.path += '&misc=' + (settings.misc || 0) + '&d=' + (settings.d || 0);
         }
         if (settings.d == 4) {
+	    if (settings.hst > 254) settings.hst = 254;
+            if (settings.hst < 2)   settings.hst = 2;	
+            options.path += '&hst=' + (settings.hst || '');
+        }
+	if (settings.d == 21) {
+            if (settings.hst > 1526) settings.hst = 1526;
+            if (settings.hst < 24)   settings.hst = 24;
             options.path += '&hst=' + (settings.hst || '');
         }
     } else {
