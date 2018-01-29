@@ -6,7 +6,7 @@ systemDictionary = {
     "name":                 {"en": "Name",                  "de": "Name",                       "ru": "Имя"},
     "input":                {"en": "Input",                 "de": "Eingang",                    "ru": "Вход"},
     "switch":               {"en": "Switch",                "de": "Schalter",                   "ru": "Переключатель"},
-    "SW LINK":              {"en": "Switch in the group",   "de": "Schalter In der Gruppe",     "ru": "Переключатель в группе"},
+    "SW LINK":              {"en": "Switch in the group",   "de": "Schalter In der Gruppe",     "ru": "Перекл. в группе"},
     "offset":               {"en": "Offset",                "de": "Offset",                     "ru": "Сдвиг"},
     "factor":               {"en": "Factor",                "de": "Factor",                     "ru": "Множитель"},
     "digital":              {"en": "Digital",               "de": "Digital",                    "ru": "Цифровой"},
