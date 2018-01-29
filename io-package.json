@@ -1,9 +1,14 @@
 {
     "common": {
         "name":                     "megadd",
-        "version":                  "0.3.1",
+        "version":                  "0.3.2",
         "news": {
-	    "0.2.0": {
+	    "0.3.2": {
+                "en":               "add DSen port settings (W26)",
+                "de":               "add DSen port settings (W26)",
+                "ru":               "add DSen port settings (W26)"
+            },	
+	    "0.3.1": {
                 "en":               "small fix",
                 "de":               "small fix",
                 "ru":               "small fix"
