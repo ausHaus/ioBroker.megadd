@@ -136,7 +136,7 @@
         }
 
         // ecmd(Action) and eth(net action)
-        if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && (portSettings.d == 3 || portSettings.d == 4))) {
+        if (portSettings.pty == 0 || portSettings.pty == 2 || (portSettings.pty == 3 && (portSettings.d == 3 || portSettings.d == 4 || (portSettings.d == 6 &&  portSettings.m == 1)))) {
             // ecmd(Action)
             text += _('Action:') + ' <input class="tvalue" data-type="ecmd" type="text" data-port="' + index + '" value="' + (portSettings.ecmd || '') + '"  style="width: 70px" maxsize="11"/>';
             text += ' <input type="checkbox" class="tvalue" data-type="af" data-port="' + index + '" ' + (portSettings.af   ? 'checked' : '') + '/>, ';
@@ -147,7 +147,7 @@
 
         //d(default state)
         if (portSettings.pty == 1) {
-            if (portSettings.m == 0) {
+            if (portSettings.m == 0 || portSettings.m == 3) {
                 text += _('Default state:') + ' <select class="tvalue" data-type="d" data-port="' + index + '">';
                 text += '<option value="0" ' + ((portSettings.d == 0) ? 'selected' : '') + '>' + _('off') + '</option>';
                 text += '<option value="1" ' + ((portSettings.d == 1) ? 'selected' : '') + '>' + _('on') + '</option>';
@@ -235,6 +235,10 @@
         if (portSettings.pty == 4 && portSettings.m == 1 && portSettings.d == 20) {
             text += ', ' + _('INT:') + ' <input class="tvalue" data-type="inta" type="text" style="width: 70px" data-port="' + index + '" value="' + (portSettings.inta || '') + '" maxsize="3"/>';
             text += ', ' + _('IN/OUT:') + ' <input class="tvalue" data-type="ext" type="text" style="width: 70px" data-port="' + index + '" value="' + (portSettings.ext || '') + '" maxsize="3"/>';
+        }
+        
+        if (portSettings.pty == 4 && portSettings.m == 1 && portSettings.d == 21) {
+            text += ', ' + _('Frequency:') + ' <input class="tvalue" data-type="hst" type="text" style="width: 70px" data-port="' + index + '" value="' + (portSettings.hst || 24) + '" maxsize="4"/>';
         }
         
         if (portSettings.pty == 0) {
@@ -796,7 +800,7 @@
                         aPorts[p].hst     = aPorts[p].hst || 0;
                         aPorts[p].naf     = aPorts[p].naf || 0;
                         aPorts[p].role    = ports[p].role || 'value.temperature';
-                        if (aPorts[p].d == 4) {
+                        if (aPorts[p].d == 4 || aPorts[p].d == 6) {
                             aPorts[p].role    = ports[p].role || 'state';
                         }
                     } else
