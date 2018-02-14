@@ -54,6 +54,7 @@ systemDictionary = {
     "SCL:":                 {"en": "SCL port:",             "de": "SCL port:",                  "ru": "SCL порт:"},
     "Display:":             {"en": "Display port:",         "de": "Anzeigen port:",             "ru": "Дисплей порт:"},
     "Bright:":              {"en": "Bright:",               "de": "Helligkeit:",                "ru": "Яркость:"},
+    "Clock:":               {"en": "Clock:",                "de": "Helligkeit:",                "ru": "Часы:"},
     "INT:":                 {"en": "INT port:",             "de": "INT port:",                  "ru": "INT порт:"},
     "IN/OUT:":              {"en": "IN/OUT:",               "de": "IN/OUT:",                    "ru": "IN/OUT:"},
     "Group:":               {"en": "Group index:",          "de": "Konzernindex:",              "ru": "Групповой индекс:"},
@@ -122,6 +123,7 @@ systemDictionary = {
     "Cancel":               {"en": "Cancel",                "de": "Abrechen",                   "ru": "Отмена"},
     "Error":                {"en": "Error",                 "de": "Fehler",                     "ru": "Ошибка"},
     "Find devices":         {"en": "Find devices",          "de": "Suche Geräte",               "ru": "Искать устройства"},
+    "Device List":          {"en": "Device List",           "de": "Geräteliste",                "ru": "Список устройств"},
     "Enable adapter first": {
         "en": "Enable adapter first",
         "de": "Aktivieren sie zuerst den adapter",
