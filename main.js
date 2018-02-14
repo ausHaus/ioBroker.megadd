@@ -89,6 +89,9 @@ adapter.on('stateChange', function (id, state) {
 		}	
             }
         }
+        if (ports[id].common.type === 'string') {
+            sendCommandToDispley(ports[id].native.port, state.val);
+        }
     }
 });
 
@@ -113,6 +116,10 @@ adapter.on('message', function (obj) {
 
             case 'writeConfig':
                 writeConfig(obj);
+                break;
+
+            case 'deviceList':
+                deviceList(obj);
                 break;
 
             default:
@@ -194,7 +201,7 @@ function processMessage(message) {
             adapter.log.debug('reported new value for port ' + port + ', request actual value');
             // Get value from analog port
             getPortState(port, processPortState);
-        }
+        }	    
     }
 }
 
@@ -764,6 +771,34 @@ function detectPorts(obj) {
     }
 }
 
+function deviceList(obj) {
+    //http://192.168.1.14/sec/?pt=33&cmd=list
+    var port = obj.message.index;
+    var parts = adapter.config.ip.split(':');
+
+    var options = {
+        host: parts[0],
+        port: parts[1] || 80,
+        path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=list'
+    };
+
+    adapter.log.debug('getDeviceList http://' + options.host + options.path);
+
+    httpGet(options, function (err, data) {
+        if (err) {
+            deviceList(obj);
+        } else {
+            if (data == 'busy') {
+                deviceList(obj);
+            } else {
+                var list = data.split(';');
+                var inputs = data.replace(/:(\D*[0-9.]+)/g, '');
+                if (obj.callback) adapter.sendTo(obj.from, obj.command, {error: null, devices: inputs}, obj.callback);
+            }
+        }
+    });
+}	    
+
 function discoverMegaOnIP(ip, callback) {
     var nums = ip.split('.');
     nums[3] = 255;
@@ -1234,6 +1269,9 @@ function processPortStateWstate(_port, id, value) {      //1Wire
             }
         });
     }
+    setTimeout(function () {
+        test = false;
+    }, 1000);
 }
 
 function processPortStateEXTport(port, ext, value) {     //EXT
@@ -1844,10 +1882,14 @@ function syncObjects() {
                     obj.common.type = 'string';
                     obj.common.def  = '';
 		} else if (settings.d == 5) { // 1Wire
-		    obj = {
-                        _id: adapter.namespace + '.' + id + '_temperature1',
+		    if (settings.dlist != undefined) {
+                        var sensor = settings.dlist.split(';');
+                        for (var i in sensor)
+                        if (i == 0)
+                    obj = {
+                        _id: adapter.namespace + '.' + id + '_' + sensor[i],
                         common: {
-                            name: obj.common.name + '_temperature1',
+                            name: obj.common.name + '_' + sensor[i],
                             role: 'value.temperature',
                             write: false,
                             read: true,
@@ -1858,17 +1900,18 @@ function syncObjects() {
                             desc: 'P' + p + ' - temperature',
                             type: 'number'
                         },
-			////native: JSON.parse(JSON.stringify(settings)),    
+                        ////native: JSON.parse(JSON.stringify(settings)),
                         native: {
                         port: p,
                         name: 'P' + p
                         },
-                        type:   'state'
+			type:   'state'
                     };
+                    else if (i == 1)
                     obj1 = {
-                        _id: adapter.namespace + '.' + id + '_temperature2',
+                        _id: adapter.namespace + '.' + id + '_' + sensor[i],
                         common: {
-                            name: obj.native.name + '_temperature2',
+                            name: obj.native.name + '_' + sensor[i],
                             role: 'value.temperature',
                             write: false,
                             read: true,
@@ -1878,18 +1921,151 @@ function syncObjects() {
                             max: 30,
                             desc: 'P' + p + ' - temperature',
                             type: 'number'
-                        },
+			},
                         ////native: JSON.parse(JSON.stringify(settings)),
                         native: {
                         port: p,
                         name: 'P' + p
-			},
+                        },
                         type: 'state'
                     };
+                    else if (i == 2)
                     obj2 = {
-                        _id: adapter.namespace + '.' + id + '_temperature3',
+                        _id: adapter.namespace + '.' + id + '_' + sensor[i],
                         common: {
-                            name: obj.native.name + '_temperature3',
+                            name: obj.native.name + '_' + sensor[i],
+                            role: 'value.temperature',
+                            write: false,
+                            read: true,
+			    unit: '°C',
+                            def: 0,
+                            min: -30,
+                            max: 30,
+                            desc: 'P' + p + ' - temperature',
+                            type: 'number'
+                        },
+                        ////native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                        port: p,
+                        name: 'P' + p
+                        },
+                        type: 'state'
+                    };
+                    else if (i == 3)
+                    obj3 = {
+			_id: adapter.namespace + '.' + id + '_' + sensor[i],
+                        common: {
+                            name: obj.native.name + '_' + sensor[i],
+                            role: 'value.temperature',
+                            write: false,
+                            read: true,
+                            unit: '°C',
+                            def: 0,
+                            min: -30,
+                            max: 30,
+                            desc: 'P' + p + ' - temperature',
+                            type: 'number'
+                        },
+                        ////native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                        port: p,
+			name: 'P' + p
+                        },
+                        type: 'state'
+                    };
+                    else if (i == 4)
+                    obj4 = {
+                        _id: adapter.namespace + '.' + id + '_' + sensor[i],
+                        common: {
+                            name: obj.native.name + '_' + sensor[i],
+                            role: 'value.temperature',
+                            write: false,
+                            read: true,
+                            unit: '°C',
+                            def: 0,
+                            min: -30,
+                            max: 30,
+			    desc: 'P' + p + ' - temperature',
+                            type: 'number'
+                        },
+                        ////native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                        port: p,
+                        name: 'P' + p
+                        },
+                        type: 'state'
+                    };
+                    else if (i == 5)
+                    obj5 = {
+                        _id: adapter.namespace + '.' + id + '_' + sensor[i],
+                        common: {
+                            name: obj.native.name + '_' + sensor[i],
+                            role: 'value.temperature',
+			    write: false,
+                            read: true,
+                            unit: '°C',
+                            def: 0,
+                            min: -30,
+                            max: 30,
+                            desc: 'P' + p + ' - temperature',
+                            type: 'number'
+                        },
+                        ////native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                        port: p,
+                        name: 'P' + p
+                        },
+                        type: 'state'
+                    };
+	            else if (i == 6)
+                    obj6 = {
+                        _id: adapter.namespace + '.' + id + '_' + sensor[i],
+                        common: {
+                            name: obj.native.name + '_' + sensor[i],
+                            role: 'value.temperature',
+                            write: false,
+                            read: true,
+                            unit: '°C',
+                            def: 0,
+                            min: -30,
+                            max: 30,
+                            desc: 'P' + p + ' - temperature',
+                            type: 'number'
+                        },
+                        ////native: JSON.parse(JSON.stringify(settings)),
+			native: {
+                        port: p,
+                        name: 'P' + p
+                        },
+                        type: 'state'
+                    };
+                    else if (i == 7)
+                    obj7 = {
+                        _id: adapter.namespace + '.' + id + '_' + sensor[i],
+                        common: {
+                            name: obj.native.name + '_' + sensor[i],
+                            role: 'value.temperature',
+                            write: false,
+                            read: true,
+                            unit: '°C',
+                            def: 0, 
+			    min: -30,
+                            max: 30,
+                            desc: 'P' + p + ' - temperature',
+                            type: 'number'
+                        },
+                        ////native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                        port: p,
+                        name: 'P' + p
+                        },
+                        type: 'state'
+                    };
+                    else if (i == 8)
+                    obj8 = {
+                        _id: adapter.namespace + '.' + id + '_' + sensor[i],
+                        common: {
+			    name: obj.native.name + '_' + sensor[i],
                             role: 'value.temperature',
                             write: false,
                             read: true,
@@ -1905,8 +2081,31 @@ function syncObjects() {
                         port: p,
                         name: 'P' + p
                         },
+			type: 'state'
+                    };
+                    else if (i == 9)
+                    obj9 = {
+                        _id: adapter.namespace + '.' + id + '_' + sensor[i],
+                        common: {
+                            name: obj.native.name + '_' + sensor[i],
+                            role: 'value.temperature',
+                            write: false,
+                            read: true,
+                            unit: '°C',
+                            def: 0,
+                            min: -30,
+                            max: 30,
+                            desc: 'P' + p + ' - temperature',
+                            type: 'number'
+			},
+                        ////native: JSON.parse(JSON.stringify(settings)),
+                        native: {
+                        port: p,
+                        name: 'P' + p
+                        },
                         type: 'state'
-		    };
+                    };
+                    }				
                 }
             } else
             if (settings.pty == 3 && settings.d == 6 && settings.m == 1) {  // Wiegand 26
@@ -1960,9 +2159,10 @@ function syncObjects() {
                     obj.common.def  = 0;
                     obj.common.role = 'value.light';
 	        } else if (settings.d == 4) { // Display
-                    obj.common.write = false;
+                    obj.common.write = true;
                     obj.common.read  = false;
-		    obj.common.type = 'state';
+		    obj.common.desc = 'P' + p + ' - display';
+		    obj.common.type = 'string';
                     obj.common.def   = '';
                 } else if (settings.d == 5) {
                     obj.common.write = false;
