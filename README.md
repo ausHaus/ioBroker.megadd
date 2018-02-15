@@ -117,6 +117,9 @@ ioBrokerЗначение = MegaЗначение * Множитель + Сдви�
          
       
 ## Changelog
+### 0.3.5 (2018-02-15)
+* (ausHaus) add 1WBUS, Display port settings
+
 ### 0.3.2 (2018-01-29)
 * (ausHaus) add DSen port settings (W26)
 
