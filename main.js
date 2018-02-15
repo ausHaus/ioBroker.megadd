@@ -1,6 +1,6 @@
 /**
  *      ioBroker MegaD-2561 Adapter
- *      11'2016 ausHaus
+ *      11'2016-2018 ausHaus
  *      Lets control the MegaD-2561 over ethernet (http://www.ab-log.ru/smart-house/ethernet/megad-2561)
  *
  *
