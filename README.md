@@ -117,6 +117,9 @@ ioBrokerЗначение = MegaЗначение * Множитель + Сдви�
          
       
 ## Changelog
+### 0.3.8 (2018-02-20)
+* (ausHaus) add I2C Bus scan for ANY port settings
+
 ### 0.3.5 (2018-02-15)
 * (ausHaus) add 1WBUS, Display port settings
 
