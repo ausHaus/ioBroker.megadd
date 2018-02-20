@@ -27,6 +27,7 @@ var server =  null;
 var ports  = {};
 var ask1WireTemp = false;
 var askEXTport = false;
+var askI2Cport = false;
 var connected = false;
 var test = true;
 
@@ -120,6 +121,10 @@ adapter.on('message', function (obj) {
 
             case 'deviceList':
                 deviceList(obj);
+                break;
+			
+	    case 'i2cScan':
+                i2cScan(obj);
                 break;
 
             default:
@@ -797,7 +802,30 @@ function deviceList(obj) {
             }
         }
     });
-}	    
+}
+
+function i2cScan(obj) {
+    //http://192.168.1.14/sec/?pt=11&cmd=scan
+    var port = obj.message.index;
+    var parts = adapter.config.ip.split(':');
+
+    var options = {
+        host: parts[0],
+        port: parts[1] || 80,
+        path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=scan'
+    };
+
+    adapter.log.debug('getI2CScan http://' + options.host + options.path);
+
+    httpGet(options, function (err, data) {
+        if (err) {
+            i2cScan(obj);
+        } else {
+            var inputs = data.match(/([^a-z0-9> ]\w+)[^<br>]+/g);
+            if (obj.callback) adapter.sendTo(obj.from, obj.command, {error: null, devices: inputs}, obj.callback);
+        }
+    });
+}
 
 function discoverMegaOnIP(ip, callback) {
     var nums = ip.split('.');
@@ -881,6 +909,64 @@ function getPortState(port, callback) {
         }
     });
 }
+
+function getPortStateI2C(port, callback) {
+    // 0x78 - SSD1306
+    // 0x80 - HTU21D/PCA9685
+    // влажности (0x80 - HTU21D/Si7021) http://192.168.0.14/sec/?pt=35&scl=34&i2c_dev=htu21d
+    // температуры (0x80 - HTU21D)      http://192.168.0.14/sec/?pt=35&scl=34&i2c_dev=htu21d&i2c_par=1
+    // освещенности (0x94 - MAX44009)   http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=max44009
+    // освещенности (0x46 - BH1750)     http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=bh1750
+    // освещенности (TSL2591)    http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=tsl2591
+    // атмосферного давления (BMP180) http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=bmp180
+    // температуры (BMP180)      http://192.168.0.14/sec/?pt=31&scl=30&i2c_dev=bmp180&i2c_par=1
+    // атмосферного давления (BMP280/BME280) http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=bmx280
+    // температуры (BMP280/BME280) http://192.168.0.14/sec/?pt=31&scl=30&i2c_dev=bmx280&i2c_par=1
+    // влажности (0xee - BME280) http://192.168.0.14/sec/?pt=31&scl=30&i2c_dev=bmx280&i2c_par=2
+    // 4-х канального АЦП (0x90 - ADS1115) http://192.168.0.14/sec/?pt=35&scl=34&i2c_dev=ads1115&i2c_par=0
+    //                                     http://192.168.0.14/sec/?pt=35&scl=34&i2c_dev=ads1115&i2c_par=1
+    //                                     http://192.168.0.14/sec/?pt=35&scl=34&i2c_dev=ads1115&i2c_par=2
+    //                                     http://192.168.0.14/sec/?pt=35&scl=34&i2c_dev=ads1115&i2c_par=3
+
+    var config = adapter.config.ports[port];
+    var sensor = config.scan.split(',');
+    var data = '';
+	
+    for (var i = 0 ; i < sensor.length ; ++i) {
+        var ssen = sensor[i];
+        if (sensor[i].indexOf('BH1750') !== -1) {
+            data = [{name : "light", dev : "bh1750"}];
+        }
+        if (sensor[i].indexOf('TSL2591') !== -1) {
+            data = [{name : "light", dev : "tsl2591"}];
+        }
+        if (sensor[i].indexOf('MAX44009') !== -1) {
+            data = [{name : "light", dev : "max44009"}];
+        }
+        if (sensor[i].indexOf('HTU21D') !== -1) {
+            data = [{name : "temperature", dev : "htu21d"},{name : "humidity", dev : "htu21d&i2c_par=1"}];
+        }
+        if (sensor[i].indexOf('BMP180') !== -1) {
+            data = [{name : "pressure", dev : "bmp180"},{name : "temperature", dev : "bmp180&i2c_par=1"}];
+        }
+        if (sensor[i].indexOf('BMP280') !== -1) {
+            data = [{name : "pressure", dev : "bmx280"},{name : "temperature", dev : "bmx280&i2c_par=1"}];
+        }
+        if (sensor[i].indexOf('BME280') !== -1) {
+            data = [{name : "pressure", dev : "bmx280"},{name : "temperature", dev : "bmx280&i2c_par=1"},{name : "humidity", dev : "bmx280&i2c_par=2"}];
+	}
+        if (sensor[i].indexOf('ADS1115') !== -1) {
+            data = [{name : "0", dev : "ads1115&i2c_par=0"},{name : "1", dev : "ads1115&i2c_par=1"},{name : "2", dev : "ads1115&i2c_par=2"},{name : "3", dev : "ad$
+        }
+
+        for (var j = 0 ; j < data.length ; ++j) {
+            var dev = data[j].dev;
+            var id = ssen + '_' + data[j].name;
+
+            callback(port, id, dev);
+	}
+    }
+}	
 
 // Get state of EXT ports
 function getPortStateEXT(port, callback) {
@@ -1271,7 +1357,7 @@ function processPortStateWstate(_port, id, value) {      //1Wire
     }
     setTimeout(function () {
         test = false;
-    }, 1000);
+    }, 2500);
 }
 
 function processPortStateEXTport(port, ext, value) {     //EXT
@@ -1337,8 +1423,50 @@ function processPortStateEXT(_port, value) {   //MCP23008 - 8port MCP23017 - 16p
     }
     setTimeout(function () {
         test = false;
-    }, 1000);
-}	    
+    }, 2500);
+}
+
+function processPortStateI2C(_port, id, dev) {
+    var parts = adapter.config.ip.split(':');
+    var config = adapter.config.ports[_port];
+    var _ports = adapter.config.ports;
+    var scl = config.misc;
+    var q = 0;
+
+    if (test === true) {
+        adapter.setState(_ports[_port].id + '_' + id, {val: undefined, ack: true, q: undefined});
+    }
+
+    var options = {
+        host: parts[0],
+        port: parts[1] || 80,
+        path: '/' + 'sec' + '/?pt=' + _port + '&scl=' + scl + '&i2c_dev=' + dev
+    };
+
+    adapter.log.debug('getPortStateI2C http://' + options.host + options.path);
+
+    httpGet(options, function (err, value) {
+	if (value) {
+            adapter.getState(_ports[_port].id + '_' + id, function (err, state) {
+                if (test !== true) {
+                    state.val = state.val;
+                } else {
+                    state.val = undefined;
+                }
+                // If status changed
+                if (value !== state.val || q !== state.q) {
+                    if (_ports[_port].pty == 4 && _ports[_port].m == 1 && _ports[_port].d == 0) {
+                        adapter.log.debug('detected new value on port [' + _port + '_' + id + ']: ' + value);
+                        adapter.setState(_ports[_port].id + '_' + id, {val: value, ack: true, q: q});
+                    }
+                }
+            });
+        }
+    });
+    setTimeout(function () {
+        test = false;
+    }, 2500);
+}    
 
 function pollStatus(dev) {
     /*for (var port = 0; port < adapter.config.ports.length; port++) {
@@ -1382,6 +1510,14 @@ function pollStatus(dev) {
                 for (var po = 0; po < adapter.config.ports.length; po++) {
                     if (adapter.config.ports[po] && adapter.config.ports[po].pty == 4 && (adapter.config.ports[po].d == 20 || adapter.config.ports[po].d == 21)) {
                         getPortStateEXT(po, processPortStateEXT);
+                    }
+                }
+            }
+	    // process I2C and ANY port
+            if (askI2Cport) {
+                for (var po = 0; po < adapter.config.ports.length; po++) {
+                    if (adapter.config.ports[po] && adapter.config.ports[po].pty == 4 && adapter.config.ports[po].m == 1 && adapter.config.ports[po].d == 0) {
+                        getPortStateI2C(po, processPortStateI2C);
                     }
                 }
             }	
@@ -2117,7 +2253,296 @@ function syncObjects() {
                 
             } else	    
             // I2C sensor
-            if (settings.pty == 4 && settings.m == 1) {
+            if (settings.pty == 4 && settings.m == 1 && settings.d == 0) {
+
+                // 0x46 - BH1750 ???? - TSL2591
+                // 0x78 - SSD1306
+                // 0x80 - HTU21D/PCA9685
+                // 0x90 - ADS1115
+                // 0x94 - MAX44009
+                // 0xee - BMP180
+
+                if (settings.scan !== undefined) {
+                    var sensor = settings.scan.split(',');
+                    for (var i in sensor)
+
+                    // Light Sensors  // settings.d == 2 || settings.d == 3
+                    if (sensor[i].indexOf('BH1750') !== -1 || sensor[i].indexOf('TSL2591') !== -1 || sensor[i].indexOf('MAX44009') !== -1) {
+                        obj.common.role = 'value.light';
+                        obj1 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_light',
+                            common: {
+                                name: obj.common.name + '_light',
+                                role: 'value.light',
+                                write: false,
+				read: true,
+                                unit: '°C',
+                                def: 0,
+                                desc: 'P' + p + ' - light',
+                                type: 'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type:   'state'
+                        };
+                    // Display  // settings.d == 4
+                    } else if (sensor[i].indexOf('SSD1306') !== -1) {
+                        obj2 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_display',
+                            common: {
+                                name: obj.common.name + '_display',
+                                role: 'state',
+                                write: true,
+                                read: false,
+				def: '',
+                                desc: 'P' + p + ' - display',
+                                type: 'string'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type:   'state'
+                        };
+                    //
+                    } else if (sensor[i].indexOf('HTU21D') !== -1) {
+                        obj3 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_temperature',
+                            common: {
+                                name: obj.common.name + '_temperature',
+                                role: 'value.temperature',
+                                write: false,
+                                read: true,
+                                unit: '°C',
+                                def: 0,
+				min: -30,
+                                max: 30,
+                                desc: 'P' + p + ' - temperature',
+                                type: 'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type:   'state'
+                        };
+                        obj4 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_humidity',
+                            common: {
+                                name: obj.native.name + '_humidity',
+                                role: 'value.humidity',
+                                write: false,
+                                read: true,
+                                unit: '%',
+                                def: 0,
+                                min: 0,
+				max: 100,
+                                desc: 'P' + p + ' - humidity',
+                                type: 'number'
+                            },
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type: 'state'
+                        };
+                    //
+                    } else if (sensor[i].indexOf('ADS1115') !== -1) {
+                        obj5 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_0',
+                            common: {
+                                name: obj.common.name + '_0',
+                                role: 'value',
+                                write: false,
+                                read: true,
+                                def: 0,
+                                min: 0,
+                                max: 0,
+				desc: 'P' + p + ' - analog input 0',
+                                type: 'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type:   'state'
+                        };
+                        obj6 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_1',
+                            common: {
+                                name: obj.common.name + '_1',
+                                role: 'value',
+                                write: false,
+                                read: true,
+                                def: 0,
+                                min: 0,
+                                max: 0,
+                                desc: 'P' + p + ' - analog input 1',
+                                type: 'number'
+			    },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type:   'state'
+                        };
+                        obj7 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_2',
+                            common: {
+                                name: obj.common.name + '_2',
+                                role: 'value',
+                                write: false,
+                                read: true,
+                                def: 0,
+                                min: 0,
+                                max: 0,
+                                desc: 'P' + p + ' - analog input 2',
+                                type: 'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+			    native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type:   'state'
+                        };
+                        obj8 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_3',
+                            common: {
+                                name: obj.common.name + '_3',
+                                role: 'value',
+                                write: false,
+                                read: true,
+                                def: 0,
+                                min: 0,
+                                max: 0,
+                                desc: 'P' + p + ' - analog input 3',
+                                type: 'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+				name: 'P' + p
+                            },
+                            type:   'state'
+                        };
+                    //               // settings.d = 5;
+                    } else if (sensor[i].indexOf('BMP180') !== -1) {
+                        obj9 = {
+                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_pressure',
+                             common: {
+                                 name: obj.native.name + '_pressure',
+                                 role: 'value.pressure',
+                                 write: false,
+                                 read: true,
+                                 unit: 'kPa',
+                                 def: 0,
+                                 min: 0,
+                                 max: 1000,
+                                 desc: 'P' + p + ' - pressure',
+                                 type: 'number'
+                             },
+                             native: {
+                                 port: p,
+				 name: 'P' + p
+                             },
+                             type: 'state'
+                        };
+                        obj10 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_temperature',
+                            common: {
+                                name: obj.native.name + '_temperature',
+                                role: 'value.temperature',
+                                write: false,
+                                read: true,
+                                unit: '°C',
+                                def: 0,
+                                min: -30,
+                                max: 30,
+                                desc: 'P' + p + ' - temperature',
+                                type: 'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+                                name: 'P' + p
+			    },
+                            type:   'state'
+                        };
+                    } else if (sensor[i].indexOf('BMP280') !== -1) {
+                        obj11 = {
+                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_pressure',
+                             common: {
+                                 name: obj.native.name + '_pressure',
+                                 role: 'value.pressure',
+                                 write: false,
+                                 read: true,
+                                 unit: 'kPa',
+                                 def: 0,
+                                 min: 0,
+                                 max: 1000,
+                                 desc: 'P' + p + ' - pressure',
+                                 type: 'number'
+                             },
+                             native: {
+                                 port: p,
+                                 name: 'P' + p
+                             },
+			     type: 'state'
+                        };
+                        obj12 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_temperature',
+                            common: {
+                                name: obj.native.name + '_temperature',
+                                role: 'value.temperature',
+                                write: false,
+                                read: true,
+                                unit: '°C',
+                                def: 0,
+                                min: -30,
+                                max: 30,
+                                desc: 'P' + p + ' - temperature',
+                                type: 'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type:   'state'
+			};
+                        obj14 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_humidity',
+                            common: {
+                                name: obj.native.name + '_humidity',
+                                role: 'value.humidity',
+                                write: false,
+                                read: true,
+                                unit: '%',
+                                def: 0,
+                                min: 0,
+                                max: 100,
+                                desc: 'P' + p + ' - humidity',
+                                type: 'number'
+                            },
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type: 'state'
+                        };
+                    }
+		}
+            } else
+            if (settings.pty == 4 && settings.m == 1 && settings.d != 0) {	
+            ///if (settings.pty == 4 && settings.m == 1) {
                 ///obj.common.write = false;
                 ///obj.common.read  = true;
                 ///obj.common.def   = 0;
@@ -2926,8 +3351,12 @@ function syncObjects() {
                 continue;
             }
 
-            newObjects.push(obj);
-            ports[obj._id] = obj;
+            if (settings.pty == 4 && settings.m == 1 && settings.d == 0) {
+                ///adapter.log.debug('TEST');
+            } else {
+                newObjects.push(obj);
+                ports[obj._id] = obj;
+	    }    
 
             if (obj1) {
                 newObjects.push(obj1);
@@ -3072,6 +3501,14 @@ function syncObjects() {
         for (var po = 0; po < adapter.config.ports.length; po++) {
             if (adapter.config.ports[po].pty == 4 && (adapter.config.ports[po].d == 20 || adapter.config.ports[po].d == 21)) {
                 askEXTport = true;
+                break;
+            }
+        }
+	    
+	// if I2C
+        for (var po = 0; po < adapter.config.ports.length; po++) {
+            if (adapter.config.ports[po].pty == 4 && adapter.config.ports[po].m == 1 && adapter.config.ports[po].d == 0) {
+                askI2Cport = true;
                 break;
             }
         }    
