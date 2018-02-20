@@ -248,6 +248,11 @@
             text += ', ' + _('Frequency:') + ' <input class="tvalue" data-type="hst" type="text" style="width: 70px" data-port="' + index + '" value="' + (portSettings.hst || 24) + '" maxsize="4"/>';
         }
         
+        //I2C Scan
+        if (portSettings.pty == 4 && portSettings.m == 1 && portSettings.d == 0) {
+            text += ', ' + ' <button data-port="' + index + '" class="i2cscan">I2C Scan</button>' + ': ' + '<input class="ttvalue" type="text" data-type="scan" data-port="' + index + '" value="' + (portSettings.scan || '') + '" style="width: 250px"/>';
+        }
+        
         if (portSettings.pty == 0) {
             if (portSettings.m == 1 || portSettings.m == 3 || portSettings.misc == 1) {
                 text += ', ' + _('Long:') + ' <input type="checkbox" class="tvalue" data-type="long" data-port="' + index + '" ' + (portSettings.long   ? 'checked' : '') + '/>';
@@ -447,8 +452,7 @@
         showPorts();
     }
     
-    function deviceList() {
-        var index = $(this).data('port');
+    function deviceListt(index) {
         if (!active) {
             showMessage(_('Enable adapter first'), 'Warning', 'info');
             return;
@@ -464,12 +468,12 @@
         showPorts();
     }
     
-    function deviceListt(index) {
+    function i2cScan(index) {
         if (!active) {
             showMessage(_('Enable adapter first'), 'Warning', 'info');
             return;
         }
-        sendTo(null, 'deviceList', {index: index}, function (msg) {
+        sendTo(null, 'i2cScan', {index: index}, function (msg) {
             if (msg && msg.error) {
                 showMessage(msg.error, _('Error'), 'alert');
             } else if (msg && msg.devices) {
@@ -533,8 +537,49 @@
         
         $('.devicelist').button({
             icons: {primary: 'ui-icon-refresh'}
-        }).css({'font-size': '0.7em'}).click(deviceList);
-
+        }).click(function () {
+            var index = $(this).data('port');
+            if (!active) {
+                showMessage(_('Enable adapter first'), 'Warning', 'info');
+                return;
+            }
+            $(this).button('disable');
+            sendTo(null, 'deviceList', {index: index}, function (msg) {
+                $('.devicelist').button('enable');
+                if (msg && msg.error) {
+                    showMessage(msg.error, _('Error'), 'alert');
+                } else if (msg && msg.devices) {
+                    if (!msg.devices.length) {
+                        showMessage(_('Nothing found'), _('Message'), 'alert');
+                    } else {
+                        $('.ttvalue[data-port=' + index + ']').val(msg.devices).trigger('change');
+                    }
+                }
+            });
+        }).css({'font-size': '0.7em'});
+        
+        $('.i2cscan').button({
+            icons: {primary: 'ui-icon-refresh'}
+        }).click(function () {
+            var index = $(this).data('port');
+            if (!active) {
+                showMessage(_('Enable adapter first'), 'Warning', 'info');
+                return;
+            }
+            $(this).button('disable');
+            sendTo(null, 'i2cScan', {index: index}, function (msg) {
+                $('.i2cscan').button('enable');
+                if (msg && msg.error) {
+                    showMessage(msg.error, _('Error'), 'alert');
+                } else if (msg && msg.devices) {
+                    if (!msg.devices.length) {
+                        showMessage(_('Nothing found'), _('Message'), 'alert');
+                    } else {
+                        $('.ttvalue[data-port=' + index + ']').val(msg.devices).trigger('change');
+                    }
+                }
+            });
+        }).css({'font-size': '0.7em'});
     }
 
     function readRooms() {
@@ -869,7 +914,7 @@
                         aPorts[p].role    = ports[p].role || 'state';
                         if (aPorts[p].m == 1) {
                             if (aPorts[p].d == 0) {
-                                aPorts[p].role    = ports[p].role || 'state';
+                                i2cScan(p);
                             }
                             if (aPorts[p].d == 1) {
                                 aPorts[p].d       = aPorts[p].d    || (_ports[p].indexOf('hum') != -1 ? 1 : 0);
@@ -901,9 +946,6 @@
                                 aPorts[p].role    = ports[p].role || 'level';
                             }
                         }
-                        /* if (aPorts[p].m == 2) {
-                            aPorts[p].role    = ports[p].role || 'state';
-                        } */
                     } else {
                         // unknown settings
                         aPorts[p].pty     = 255;
