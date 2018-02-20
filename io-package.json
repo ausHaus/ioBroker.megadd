@@ -1,8 +1,13 @@
 {
     "common": {
         "name":                     "megadd",
-        "version":                  "0.3.5",
+        "version":                  "0.3.8",
         "news": {
+	    "0.3.8": {
+                "en":               "add I2C Bus scan for ANY port settings",
+                "de":               "add I2C Bus scan for ANY port settings",
+                "ru":               "add I2C Bus scan for ANY port settings"
+            },
 	    "0.3.5": {
                 "en":               "add 1WBUS, Display port settings",
                 "de":               "add 1WBUS, Display port settings",
