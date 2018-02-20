@@ -956,7 +956,7 @@ function getPortStateI2C(port, callback) {
             data = [{name : "pressure", dev : "bmx280"},{name : "temperature", dev : "bmx280&i2c_par=1"},{name : "humidity", dev : "bmx280&i2c_par=2"}];
 	}
         if (sensor[i].indexOf('ADS1115') !== -1) {
-            data = [{name : "0", dev : "ads1115&i2c_par=0"},{name : "1", dev : "ads1115&i2c_par=1"},{name : "2", dev : "ads1115&i2c_par=2"},{name : "3", dev : "ad$
+            data = [{name : "0", dev : "ads1115&i2c_par=0"},{name : "1", dev : "ads1115&i2c_par=1"},{name : "2", dev : "ads1115&i2c_par=2"},{name : "3", dev : "ads1115&i2c_par=3"}];
         }
 
         for (var j = 0 ; j < data.length ; ++j) {
