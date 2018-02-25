@@ -933,35 +933,45 @@ function getPortStateI2C(port, callback) {
     var data = '';
 	
     for (var i = 0 ; i < sensor.length ; ++i) {
-        var ssen = sensor[i];
         if (sensor[i].indexOf('BH1750') !== -1) {
-            data = [{name : "light", dev : "bh1750"}];
+            data = [{name: "light", dev: "bh1750"}];
         }
         if (sensor[i].indexOf('TSL2591') !== -1) {
-            data = [{name : "light", dev : "tsl2591"}];
+            data = [{name: "light", dev: "tsl2591"}];
         }
         if (sensor[i].indexOf('MAX44009') !== -1) {
-            data = [{name : "light", dev : "max44009"}];
+            data = [{name: "light", dev: "max44009"}];
         }
         if (sensor[i].indexOf('HTU21D') !== -1) {
-            data = [{name : "temperature", dev : "htu21d"},{name : "humidity", dev : "htu21d&i2c_par=1"}];
+            data = [{name: "humidity", dev: "htu21d"},{name: "temperature", dev: "htu21d&i2c_par=1"}];
         }
         if (sensor[i].indexOf('BMP180') !== -1) {
-            data = [{name : "pressure", dev : "bmp180"},{name : "temperature", dev : "bmp180&i2c_par=1"}];
+            data = [{name: "pressure", dev: "bmp180"},{name: "temperature", dev: "bmp180&i2c_par=1"}];
         }
-        if (sensor[i].indexOf('BMP280') !== -1) {
-            data = [{name : "pressure", dev : "bmx280"},{name : "temperature", dev : "bmx280&i2c_par=1"}];
-        }
-        if (sensor[i].indexOf('BME280') !== -1) {
-            data = [{name : "pressure", dev : "bmx280"},{name : "temperature", dev : "bmx280&i2c_par=1"},{name : "humidity", dev : "bmx280&i2c_par=2"}];
+        if (sensor[i].indexOf('BMX280') !== -1) {
+            data = [{name: "pressure", dev: "bmx280"},{name: "temperature", dev: "bmx280&i2c_par=1"},{name: "humidity", dev: "bmx280&i2c_par=2"}];
 	}
         if (sensor[i].indexOf('ADS1115') !== -1) {
-            data = [{name : "0", dev : "ads1115&i2c_par=0"},{name : "1", dev : "ads1115&i2c_par=1"},{name : "2", dev : "ads1115&i2c_par=2"},{name : "3", dev : "ads1115&i2c_par=3"}];
+            data = [{name: "0", dev: "ads1115&i2c_par=0"},{name: "1", dev: "ads1115&i2c_par=1"},{name: "2", dev: "ads1115&i2c_par=2"},{name: "3", dev: "ads1115&i2c_par=3"}];
         }
 
         for (var j = 0 ; j < data.length ; ++j) {
+	    var test = '';
+            
+            if (config.d === 1)  test = 'HTU21D';
+            if (config.d === 2)  test = 'BH1750';
+            if (config.d === 3)  test = 'TSL2591';
+            if (config.d === 4)  test = 'SSD1306';
+            if (config.d === 5)  test = 'BMP180';
+            if (config.d === 6)  test = 'BMx280';
+            if (config.d === 7)  test = 'MAX44009';
+            if (config.d === 20) test = 'MCP230XX';
+            if (config.d === 21) test = 'PCA9685';
+
+            if (sensor[i] === test) continue;
+		
             var dev = data[j].dev;
-            var id = ssen + '_' + data[j].name;
+            var id = sensor[i] + '_' + data[j].name;
 
             callback(port, id, dev);
 	}
@@ -1247,20 +1257,25 @@ function processPortState(_port, value) {
             } else
             if (_ports[_port].pty == 3) {
                 if (_ports[_port].value !== value || _ports[_port].q !== q) {
+		    adapter.log.debug('detected new value on port [' + _port + ']: ' + value);	
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
                 }
                 if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q !== q)) {
+		    adapter.log.debug('detected new value on port [' + _port + '_humidity' + ']: ' + value);
                     adapter.setState(_ports[_port].id + '_humidity', {val: secondary, ack: true, q: q});
                 }
             } else
-            if (_ports[_port].pty == 4 && _ports[_port].m == 1) {
+            if (_ports[_port].pty == 4 && _ports[_port].m == 1 && _ports[_port].d !== 4) {
                 if (_ports[_port].value !== value || _ports[_port].q !== q) {
+		    adapter.log.debug('detected new value on port [' + _port + ']: ' + value);	
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
                 }
                 if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q !== q)) {
 		    if (_ports[_port].d == 5 || _ports[_port].d == 6) {
+			adapter.log.debug('detected new value on port [' + _port + '_pressure' + ']: ' + secondary);    
                         adapter.setState(_ports[_port].id + '_pressure', {val: secondary, ack: true, q: q});
                     } else
+		    adapter.log.debug('detected new value on port [' + _port + '_humidity' + ']: ' + secondary);    
                     adapter.setState(_ports[_port].id + '_humidity', {val: secondary, ack: true, q: q});
                 }
             } else
@@ -1455,7 +1470,7 @@ function processPortStateI2C(_port, id, dev) {
                 }
                 // If status changed
                 if (value !== state.val || q !== state.q) {
-                    if (_ports[_port].pty == 4 && _ports[_port].m == 1 && _ports[_port].d == 0) {
+                    if (_ports[_port].pty == 4 && _ports[_port].m == 1) {
                         adapter.log.debug('detected new value on port [' + _port + '_' + id + ']: ' + value);
                         adapter.setState(_ports[_port].id + '_' + id, {val: value, ack: true, q: q});
                     }
@@ -1516,7 +1531,7 @@ function pollStatus(dev) {
 	    // process I2C and ANY port
             if (askI2Cport) {
                 for (var po = 0; po < adapter.config.ports.length; po++) {
-                    if (adapter.config.ports[po] && adapter.config.ports[po].pty == 4 && adapter.config.ports[po].m == 1 && adapter.config.ports[po].d == 0) {
+                    if (adapter.config.ports[po] && adapter.config.ports[po].pty == 4 && adapter.config.ports[po].m == 1) {
                         getPortStateI2C(po, processPortStateI2C);
                     }
                 }
@@ -1729,6 +1744,23 @@ function sendCommandToEXT(id, port, ext, value) {          //MCP
     });
 }
 
+function sendCommandToDispley(port, value) {
+    //'http://192.168.1.15/sec/?pt=30&text=_12;35'
+    var data = 'pt=' + port + '&text=' + (value || '');
+
+    var parts = adapter.config.ip.split(':');
+
+    var options = {
+        host: parts[0],
+        port: parts[1] || 80,
+        path: '/' + adapter.config.password + '/?' + data
+    };
+    adapter.log.debug('Send command "' + data + '" to ' + adapter.config.ip);
+
+    // Set up the request
+    httpGet(options);
+}
+
 function sendCommandToCounter(port, value) {
     //'http://192.168.0.52/sec/?pt=2&cnt=0'
     var data = 'pt=' + port + '&cnt=' + (value || 0);
@@ -1837,7 +1869,26 @@ function syncObjects() {
             var obj12 = null;
             var obj13 = null;
             var obj14 = null;
-            var obj15 = null;	
+            var obj15 = null;
+	    var obj16 = null;
+            var obj17 = null;
+	    var obj18 = null;
+            var obj19 = null;
+            var obj20 = null;
+            var obj21 = null;
+            var obj22 = null;
+            var obj23 = null;
+            var obj24 = null;
+            var obj25 = null;
+            var obj26 = null;
+            var obj27 = null;
+            var obj28 = null;
+            var obj29 = null;
+            var obj30 = null;
+            var obj31 = null;
+            var obj32 = null;
+            var obj33 = null;
+            var obj34 = null;
 
             // input
             if (!settings.pty) {
@@ -2253,30 +2304,34 @@ function syncObjects() {
                 
             } else	    
             // I2C sensor
-            if (settings.pty == 4 && settings.m == 1 && settings.d == 0) {
-
-                // 0x46 - BH1750 ???? - TSL2591
-                // 0x78 - SSD1306
-                // 0x80 - HTU21D/PCA9685
-                // 0x90 - ADS1115
-                // 0x94 - MAX44009
-                // 0xee - BMP180
-
+            if (settings.pty == 4 && settings.m == 1) {
+                var test = '';
                 if (settings.scan !== undefined) {
                     var sensor = settings.scan.split(',');
-                    for (var i in sensor)
+                    if (settings.d == 1)  test = 'HTU21D';
+                    if (settings.d == 2)  test = 'BH1750';
+                    if (settings.d == 3)  test = 'TSL2591';
+                    if (settings.d == 4)  test = 'SSD1306';
+                    if (settings.d == 5)  test = 'BMP180';
+                    if (settings.d == 6)  test = 'BMx280';
+                    if (settings.d == 7)  test = 'MAX44009';
+                    if (settings.d == 20) test = 'MCP230XX';
+                    if (settings.d == 21) test = 'PCA9685';
 
+                    for (var i in sensor)
+                    if (sensor) {
+                    if (sensor[i] == test) continue;
+                    
                     // Light Sensors  // settings.d == 2 || settings.d == 3
-                    if (sensor[i].indexOf('BH1750') !== -1 || sensor[i].indexOf('TSL2591') !== -1 || sensor[i].indexOf('MAX44009') !== -1) {
-                        obj.common.role = 'value.light';
-                        obj1 = {
+                    if (sensor[i].indexOf('BH1750') !== -1) {
+                        obj18 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_light',
                             common: {
                                 name: obj.common.name + '_light',
                                 role: 'value.light',
                                 write: false,
-				read: true,
-                                unit: '°C',
+                                read: true,
+                                unit: 'lux',
                                 def: 0,
                                 desc: 'P' + p + ' - light',
                                 type: 'number'
@@ -2288,9 +2343,49 @@ function syncObjects() {
                             },
                             type:   'state'
                         };
+                    } else if (sensor[i].indexOf('TSL2591') !== -1) {
+                        obj19 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_light',
+                            common: {
+                                name: obj.common.name + '_light',
+                                role: 'value.light',
+                                write: false,
+                                read: true,
+                                unit: 'lux',
+                                def: 0,
+                                desc: 'P' + p + ' - light',
+				type: 'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type:   'state'
+                        };
+                    } else if (sensor[i].indexOf('MAX44009') !== -1) {
+                        obj20 = {
+                            _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_light',
+                            common: {
+                                name: obj.common.name + '_light',
+                                role: 'value.light',
+                                write: false,
+                                read: true,
+                                unit: 'lux',
+                                def: 0,
+                                desc: 'P' + p + ' - light',
+				type: 'number'
+                            },
+                            ///native: JSON.parse(JSON.stringify(settings)),
+                            native: {
+                                port: p,
+                                name: 'P' + p
+                            },
+                            type:   'state'
+                        };    
                     // Display  // settings.d == 4
                     } else if (sensor[i].indexOf('SSD1306') !== -1) {
-                        obj2 = {
+                        obj21 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_display',
                             common: {
                                 name: obj.common.name + '_display',
@@ -2310,7 +2405,7 @@ function syncObjects() {
                         };
                     //
                     } else if (sensor[i].indexOf('HTU21D') !== -1) {
-                        obj3 = {
+                        obj22 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_temperature',
                             common: {
                                 name: obj.common.name + '_temperature',
@@ -2331,7 +2426,7 @@ function syncObjects() {
                             },
                             type:   'state'
                         };
-                        obj4 = {
+                        obj23 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_humidity',
                             common: {
                                 name: obj.native.name + '_humidity',
@@ -2353,7 +2448,7 @@ function syncObjects() {
                         };
                     //
                     } else if (sensor[i].indexOf('ADS1115') !== -1) {
-                        obj5 = {
+                        obj24 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_0',
                             common: {
                                 name: obj.common.name + '_0',
@@ -2373,7 +2468,7 @@ function syncObjects() {
                             },
                             type:   'state'
                         };
-                        obj6 = {
+                        obj25 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_1',
                             common: {
                                 name: obj.common.name + '_1',
@@ -2393,7 +2488,7 @@ function syncObjects() {
                             },
                             type:   'state'
                         };
-                        obj7 = {
+                        obj26 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_2',
                             common: {
                                 name: obj.common.name + '_2',
@@ -2413,7 +2508,7 @@ function syncObjects() {
                             },
                             type:   'state'
                         };
-                        obj8 = {
+                        obj27 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_3',
                             common: {
                                 name: obj.common.name + '_3',
@@ -2435,7 +2530,7 @@ function syncObjects() {
                         };
                     //               // settings.d = 5;
                     } else if (sensor[i].indexOf('BMP180') !== -1) {
-                        obj9 = {
+                        obj28 = {
                              _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_pressure',
                              common: {
                                  name: obj.native.name + '_pressure',
@@ -2455,7 +2550,7 @@ function syncObjects() {
                              },
                              type: 'state'
                         };
-                        obj10 = {
+                        obj29 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_temperature',
                             common: {
                                 name: obj.native.name + '_temperature',
@@ -2476,8 +2571,8 @@ function syncObjects() {
 			    },
                             type:   'state'
                         };
-                    } else if (sensor[i].indexOf('BMP280') !== -1) {
-                        obj11 = {
+                    } else if (sensor[i].indexOf('BMX280') !== -1) {
+                        obj30 = {
                              _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_pressure',
                              common: {
                                  name: obj.native.name + '_pressure',
@@ -2497,7 +2592,7 @@ function syncObjects() {
                              },
 			     type: 'state'
                         };
-                        obj12 = {
+                        obj31 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_temperature',
                             common: {
                                 name: obj.native.name + '_temperature',
@@ -2518,7 +2613,7 @@ function syncObjects() {
                             },
                             type:   'state'
 			};
-                        obj14 = {
+                        obj32 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_humidity',
                             common: {
                                 name: obj.native.name + '_humidity',
@@ -2540,8 +2635,8 @@ function syncObjects() {
                         };
                     }
 		}
-            } else
-            if (settings.pty == 4 && settings.m == 1 && settings.d != 0) {	
+            }
+            ///if (settings.pty == 4 && settings.m == 1 && settings.d != 0) {	
             ///if (settings.pty == 4 && settings.m == 1) {
                 ///obj.common.write = false;
                 ///obj.common.read  = true;
@@ -3418,6 +3513,74 @@ function syncObjects() {
                 newObjects.push(obj15);
                 ports[obj15._id] = obj15;
             }
+	    if (obj18) {
+                newObjects.push(obj18);
+                ports[obj18._id] = obj18;
+            }
+            if (obj19) {
+                newObjects.push(obj19);
+                ports[obj19._id] = obj19;
+            }
+            if (obj20) {
+                newObjects.push(obj20);
+                ports[obj20._id] = obj20;
+            }
+            if (obj21) {
+                newObjects.push(obj21);
+                ports[obj21._id] = obj21;
+            }
+            if (obj22) {
+                newObjects.push(obj22);
+                ports[obj22._id] = obj22;
+            }
+	    if (obj23) {
+                newObjects.push(obj23);
+                ports[obj23._id] = obj23;
+            }
+            if (obj24) {
+                newObjects.push(obj24);
+                ports[obj24._id] = obj24;
+            }
+            if (obj25) {
+                newObjects.push(obj25);
+                ports[obj25._id] = obj25;
+            }
+            if (obj26) {
+                newObjects.push(obj26);
+                ports[obj26._id] = obj26;
+            }
+            if (obj27) {
+                newObjects.push(obj27);
+                ports[obj27._id] = obj27;
+            }
+	    	if (obj28) {
+                newObjects.push(obj28);
+                ports[obj28._id] = obj28;
+            }
+            if (obj29) {
+                newObjects.push(obj29);
+                ports[obj29._id] = obj29;
+            }
+            if (obj30) {
+                newObjects.push(obj30);
+                ports[obj30._id] = obj30;
+            }
+            if (obj31) {
+                newObjects.push(obj31);
+                ports[obj31._id] = obj31;
+            }
+            if (obj32) {
+                newObjects.push(obj32);
+                ports[obj32._id] = obj32;
+            }
+	    if (obj33) {
+                newObjects.push(obj33);
+                ports[obj33._id] = obj33;
+            }
+            if (obj34) {
+                newObjects.push(obj34);
+                ports[obj33._id] = obj34;
+            }	
         }
     }
 
@@ -3507,7 +3670,7 @@ function syncObjects() {
 	    
 	// if I2C
         for (var po = 0; po < adapter.config.ports.length; po++) {
-            if (adapter.config.ports[po].pty == 4 && adapter.config.ports[po].m == 1 && adapter.config.ports[po].d == 0) {
+            if (adapter.config.ports[po].pty == 4 && adapter.config.ports[po].m == 1) {
                 askI2Cport = true;
                 break;
             }
