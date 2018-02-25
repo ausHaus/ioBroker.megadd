@@ -2679,6 +2679,7 @@ function syncObjects() {
                     obj.common.desc = 'P' + p + ' - light';
                     obj.common.type = 'number';
                     obj.common.def  = 0;
+		    obj.common.unit = 'lux';	
                     obj.common.role = 'value.light';
 	        } else if (settings.d == 4) { // Display
                     obj.common.write = true;
