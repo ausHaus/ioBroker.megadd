@@ -929,6 +929,7 @@ function getPortStateI2C(port, callback) {
     //                                     http://192.168.0.14/sec/?pt=35&scl=34&i2c_dev=ads1115&i2c_par=3
 
     var config = adapter.config.ports[port];
+    if (config.scan !== undefined) {
     var sensor = config.scan.split(',');
     var data = '';
 	
@@ -976,6 +977,7 @@ function getPortStateI2C(port, callback) {
             callback(port, id, dev);
 	}
     }
+    }	      
 }	
 
 // Get state of EXT ports
