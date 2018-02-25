@@ -249,7 +249,7 @@
         }
         
         //I2C Scan
-        if (portSettings.pty == 4 && portSettings.m == 1 && portSettings.d == 0) {
+        if (portSettings.pty == 4 && portSettings.m == 1) {
             text += ', ' + ' <button data-port="' + index + '" class="i2cscan">I2C Scan</button>' + ': ' + '<input class="ttvalue" type="text" data-type="scan" data-port="' + index + '" value="' + (portSettings.scan || '') + '" style="width: 250px"/>';
         }
         
