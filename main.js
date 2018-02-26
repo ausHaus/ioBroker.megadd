@@ -917,7 +917,7 @@ function getPortStateI2C(port, callback) {
     // температуры (0x80 - HTU21D)      http://192.168.0.14/sec/?pt=35&scl=34&i2c_dev=htu21d&i2c_par=1
     // освещенности (0x94 - MAX44009)   http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=max44009
     // освещенности (0x46 - BH1750)     http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=bh1750
-    // освещенности (TSL2591)    http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=tsl2591
+    // освещенности (0x51 - TSL2591 0x53 ???)    http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=tsl2591
     // атмосферного давления (BMP180) http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=bmp180
     // температуры (BMP180)      http://192.168.0.14/sec/?pt=31&scl=30&i2c_dev=bmp180&i2c_par=1
     // атмосферного давления (BMP280/BME280) http://192.168.0.14/sec/?pt=30&scl=31&i2c_dev=bmx280
@@ -2324,7 +2324,7 @@ function syncObjects() {
                     if (sensor) {
                     if (sensor[i] == test) continue;
                     
-                    // Light Sensors  // settings.d == 2 || settings.d == 3
+                    // Light Sensors  // settings.d == 2 || settings.d == 3 || settings.d == 7
                     if (sensor[i].indexOf('BH1750') !== -1) {
                         obj18 = {
                             _id: adapter.namespace + '.' + id + '_' + sensor[i] + '_light',
@@ -2673,29 +2673,33 @@ function syncObjects() {
                         },
                         type: 'state'
                     };
-                } else if (settings.d == 2 || settings.d == 3) { // Light Sensors
+		// Light Sensors BH1750	|| TSL2591 || MAX44009
+                } else if (settings.d == 2 || settings.d == 3 || settings.d == 7) {
 	            obj.common.write = false;
                     obj.common.read  = true;
-                    obj.common.desc = 'P' + p + ' - light';
-                    obj.common.type = 'number';
-                    obj.common.def  = 0;
-		    obj.common.unit = 'lux';	
-                    obj.common.role = 'value.light';
-	        } else if (settings.d == 4) { // Display
-                    obj.common.write = true;
+                    obj.common.desc  = 'P' + p + ' - light';
+                    obj.common.type  = 'number';
+                    obj.common.def   = 0;
+		    obj.common.unit  = 'lux';	
+                    obj.common.role  = 'value.light';
+		// Display SSD1306
+	        } else if (settings.d == 4) {
+		    obj.common.write = true;
                     obj.common.read  = false;
-		    obj.common.desc = 'P' + p + ' - display';
-		    obj.common.type = 'string';
+		    obj.common.desc  = 'P' + p + ' - display';
+		    obj.common.type  = 'string';
                     obj.common.def   = '';
+		    if (!obj.common.role) obj.common.role = 'state';
+		// BMP180	
                 } else if (settings.d == 5) {
                     obj.common.write = false;
                     obj.common.read  = true;
                     obj.common.def   = 0;
-                    obj.common.min = -30;
-                    obj.common.max = 30;
-                    obj.common.unit = '°C';
-                    obj.common.desc = 'P' + p + ' - temperature';
-                    obj.common.type = 'number';
+                    obj.common.min   = -30;
+                    obj.common.max   = 30;
+                    obj.common.unit  = '°C';
+                    obj.common.desc  = 'P' + p + ' - temperature';
+                    obj.common.type  = 'number';
                     if (!obj.common.role) obj.common.role = 'value.temperature';
 		    obj1 = {
                         _id: adapter.namespace + '.' + id + '_pressure',
@@ -2716,15 +2720,16 @@ function syncObjects() {
                         },
                         type: 'state'
                     };
-	        } else if (settings.d == 6) {  //BMx280
+		//BMx280	
+	        } else if (settings.d == 6) {
                     obj.common.write = false;
                     obj.common.read  = true;
                     obj.common.def   = 0;
-                    obj.common.min = -30;
-                    obj.common.max = 30;
-                    obj.common.unit = '°C';
-                    obj.common.desc = 'P' + p + ' - temperature';
-                    obj.common.type = 'number';
+                    obj.common.min   = -30;
+                    obj.common.max   = 30;
+                    obj.common.unit  = '°C';
+                    obj.common.desc  = 'P' + p + ' - temperature';
+                    obj.common.type  = 'number';
                     if (!obj.common.role) obj.common.role = 'value.temperature';
                     obj1 = {
                         _id: adapter.namespace + '.' + id + '_pressure',
@@ -2764,8 +2769,10 @@ function syncObjects() {
                         },
                         type: 'state'
 		    };
+		// MCP230XX	
                 } else if (settings.d == 20) {
-                    if (settings.ext == 8) { // MCP23008
+		    // MCP23008	
+                    if (settings.ext == 8) {
                         obj = {
                             _id: adapter.namespace + '.' + id + '_P0',
                             common: {
