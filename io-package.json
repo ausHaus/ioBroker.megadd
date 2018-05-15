@@ -1,8 +1,13 @@
 {
     "common": {
         "name":                     "megadd",
-        "version":                  "0.3.8",
+        "version":                  "0.4.0",
         "news": {
+	    "0.4.0": {
+                "en":               "fix DSen port (W26)",
+                "de":               "fix DSen port (W26)",
+                "ru":               "fix DSen port (W26)"
+            },	
 	    "0.3.8": {
                 "en":               "add I2C Bus scan for ANY port settings",
                 "de":               "add I2C Bus scan for ANY port settings",
