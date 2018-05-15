@@ -117,6 +117,9 @@ ioBrokerЗначение = MegaЗначение * Множитель + Сдви�
          
       
 ## Changelog
+### 0.4.0 (2018-05-15)
+* (ausHaus) fix DSen port (W26)
+
 ### 0.3.8 (2018-02-20)
 * (ausHaus) add I2C Bus scan for ANY port settings
 
