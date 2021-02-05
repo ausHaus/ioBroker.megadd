@@ -284,7 +284,7 @@ describe('Test MegaD', function() {
 
     it('Test MegaD: check creation of state', function (done) {
         this.timeout(5000);
-        checkValueOfState('megadd.0.info.connection', true, function () {
+        checkValueOfState('megadd.0.p0_P0_counter', 0, function () {
             done();
         }, 10);
     });
