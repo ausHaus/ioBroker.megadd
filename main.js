@@ -73,13 +73,13 @@ adapter.on('stateChange', function (id, state) {
                     sendCommandToEXT(id, ports[id].native.port, ports[id].native.ext, state.val);
                 } else {
                     sendCommand(ports[id].native.port, state.val);
-                }	
+                }
             } else if (id.indexOf('_counter') !== -1) {
                 sendCommandToCounter(ports[id].native.port, state.val);
             } else {
 		if (id.indexOf('_P' + ports[id].native.port + '_P') !== -1) {   // EXT
                     sendCommandToEXT(id, ports[id].native.port, ports[id].native.ext, state.val);
-                } else {    
+                } else {
                     ports[id].native.offset = parseFloat(ports[id].native.offset || 0) || 0;
                     ports[id].native.factor = parseFloat(ports[id].native.factor || 1) || 1;
 
@@ -87,7 +87,7 @@ adapter.on('stateChange', function (id, state) {
                     state.val = Math.round(state.val);
 
                     sendCommand(ports[id].native.port, state.val);
-		}	
+		}
             }
         }
         if (ports[id].common.type === 'string') {
@@ -122,7 +122,7 @@ adapter.on('message', function (obj) {
             case 'deviceList':
                 deviceList(obj);
                 break;
-			
+
 	    case 'i2cScan':
                 i2cScan(obj);
                 break;
@@ -132,7 +132,6 @@ adapter.on('message', function (obj) {
                 break;
         }
     }
-    processMessages();
 });
 
 function httpGet(options, callback, userArg) {
@@ -153,15 +152,6 @@ function httpGet(options, callback, userArg) {
         });
     }).on('error', function (err) {
         callback && callback(err, null, userArg);
-    });
-}
-
-function processMessages(ignore) {
-    adapter.getMessage(function (err, obj) {
-        if (obj) {
-            if (!ignore && obj && obj.command === 'send') processMessage(obj.message);
-            processMessages();
-        }
     });
 }
 
@@ -189,7 +179,7 @@ function processMessage(message) {
     // Command from instance with web server
     if (adapter.config.ports[port]) {
         // If digital port
-	///if (!adapter.config.ports[port].pty && adapter.config.ports[port].m != 1) {   
+	///if (!adapter.config.ports[port].pty && adapter.config.ports[port].m != 1) {
         if (!adapter.config.ports[port].pty && adapter.config.ports[port].misc != 1) {
             adapter.config.ports[port].value = !adapter.config.ports[port].m ? 1 : 0;
             processClick(port);
@@ -206,7 +196,7 @@ function processMessage(message) {
             adapter.log.debug('reported new value for port ' + port + ', request actual value');
             // Get value from analog port
             getPortState(port, processPortState);
-        }	    
+        }
     }
 }
 
@@ -258,12 +248,12 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
         if (settings.d > 255) settings.d = 255;
         if (settings.d < 0)   settings.d = 0;
 	if (settings.misc == 1)   settings.misc = 1;
-        settings.m2 = parseInt(settings.m2, 10) || 1;    
+        settings.m2 = parseInt(settings.m2, 10) || 1;
 
         // digital out
-	if (settings.m == 0 || settings.m == 1 || settings.m == 3) {    
+	if (settings.m == 0 || settings.m == 1 || settings.m == 3) {
             options.path += '&pty=1&m=' + (settings.m || 0) + '&d=' + (settings.d || 0) + '&disp=' + (settings.disp || '');
-	}	
+	}
         if (settings.m == 1) {
             options.path += '&misc=' + (settings.misc || '') + '&fr=' + (settings.fr || 0);
         }
@@ -303,7 +293,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
             options.path += '&m=' + (settings.m || 0) + '&misc=' + (settings.misc || 0) + '&hst=' + (settings.hst || 0) + '&ecmd=' + encodeURIComponent((settings.ecmd || '').trim()) + '&eth=' + encodeURIComponent((settings.eth || '').trim()) + '&disp=' + (settings.disp || '');
             if (settings.af == 1) {
                 options.path += '&af=1';
-            }	
+            }
             if (settings.naf == 1) {
                 options.path += '&naf=1';
             }
@@ -338,7 +328,7 @@ function writeConfigOne(ip, pass, _settings, callback, port, errors) {
         }
         if (settings.d == 4) {
 	    if (settings.hst > 254) settings.hst = 254;
-            if (settings.hst < 2)   settings.hst = 2;	
+            if (settings.hst < 2)   settings.hst = 2;
             options.path += '&hst=' + (settings.hst || '');
         }
 	if (settings.d == 21) {
@@ -528,7 +518,7 @@ function writeConfigDevice(ip, pass, config, callback) {
             return callback('Device with "' + ip + '" is not reachable from ioBroker.');
         }
         ///options.path += '&sip=' + sip + (config.port ? ':' + config.port : '');
-	options.path += '&sip=' + sip + (config.port ? ':' + config.port : ':80');  
+	options.path += '&sip=' + sip + (config.port ? ':' + config.port : ':80');
         options.path += '&sct=' + encodeURIComponent(adapter.instance + '/');
     }
 
@@ -671,7 +661,7 @@ function detectPortConfig(ip, pass, length, callback, port, result) {
             if (settings.fr   !== undefined) settings.fr   = parseInt(settings.fr,   10);
             if (settings.m2   !== undefined) settings.m2   = parseInt(settings.m2,   10);
             if (settings.ecmd === 'ð=')      settings.ecmd = '';
-		
+
 	    if (settings.pty == 4 && settings.d == 20) {    //EXT
                 var ext = data.match(/<br>[^>]+<form/g);
                 if (ext) {
@@ -898,7 +888,7 @@ function getPortState(port, callback) {
         port: parts[1] || 80,
         path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=get'
     };
-	
+
     adapter.log.debug('getPortState http://' + options.host + options.path);
 
     httpGet(options, function (err, data) {
@@ -932,7 +922,7 @@ function getPortStateI2C(port, callback) {
     if (config.scan !== undefined) {
     var sensor = config.scan.split(',');
     var data = '';
-	
+
     for (var i = 0 ; i < sensor.length ; ++i) {
         if (sensor[i].indexOf('BH1750') !== -1) {
             data = [{name: "light", dev: "bh1750"}];
@@ -958,7 +948,7 @@ function getPortStateI2C(port, callback) {
 
         for (var j = 0 ; j < data.length ; ++j) {
 	    var test = '';
-            
+
             if (config.d === 1)  test = 'HTU21D';
             if (config.d === 2)  test = 'BH1750';
             if (config.d === 3)  test = 'TSL2591';
@@ -970,15 +960,15 @@ function getPortStateI2C(port, callback) {
             if (config.d === 21) test = 'PCA9685';
 
             if (sensor[i] === test) continue;
-		
+
             var dev = data[j].dev;
             var id = sensor[i] + '_' + data[j].name;
 
             callback(port, id, dev);
 	}
     }
-    }	      
-}	
+    }
+}
 
 // Get state of EXT ports
 function getPortStateEXT(port, callback) {
@@ -1008,7 +998,7 @@ function getPortStateW(port, callback) {
         port: parts[1] || 80,
         path: '/' + adapter.config.password + '/?pt=' + port + '&cmd=list'
     };
-	
+
     adapter.log.debug('getPortStateW http://' + options.host + options.path);
 
     httpGet(options, function (err, data) {
@@ -1049,7 +1039,7 @@ function processClick(port) {
 
     // If press_long
     ///if (config.m == 1 && config.long) {
-    if ((config.m == 1 || config.misc == 1) && config.long) {	
+    if ((config.m == 1 || config.misc == 1) && config.long) {
         // Detect EDGE
         if (config.oldValue !== undefined && config.oldValue !== null && config.oldValue !== config.value) {
             adapter.log.debug('new state detected on port [' + port + ']: ' + config.value);
@@ -1191,11 +1181,11 @@ function processPortState(_port, value) {
 		adapter.log.warn('Unknown port: ' + _port);
 		return;
 	}
-	
+
     if (value !== null) {
         var secondary = null;
         var f;
-        // Value can be OFF/5 or 27/0 or 27 or ON  or DS2413 ON/OFF 
+        // Value can be OFF/5 or 27/0 or 27 or ON  or DS2413 ON/OFF
         if (typeof value === 'string') {
             var t = value.split('/');
             var m = value.match(/temp:([0-9.-]+)/);
@@ -1259,7 +1249,7 @@ function processPortState(_port, value) {
             } else
             if (_ports[_port].pty == 3) {
                 if (_ports[_port].value !== value || _ports[_port].q !== q) {
-		    adapter.log.debug('detected new value on port [' + _port + ']: ' + value);	
+		    adapter.log.debug('detected new value on port [' + _port + ']: ' + value);
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
                 }
                 if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q !== q)) {
@@ -1269,15 +1259,15 @@ function processPortState(_port, value) {
             } else
             if (_ports[_port].pty == 4 && _ports[_port].m == 1 && _ports[_port].d !== 4) {
                 if (_ports[_port].value !== value || _ports[_port].q !== q) {
-		    adapter.log.debug('detected new value on port [' + _port + ']: ' + value);	
+		    adapter.log.debug('detected new value on port [' + _port + ']: ' + value);
                     adapter.setState(_ports[_port].id, {val: value, ack: true, q: q});
                 }
                 if (secondary !== null && (_ports[_port].secondary != secondary || _ports[_port].q !== q)) {
 		    if (_ports[_port].d == 5 || _ports[_port].d == 6) {
-			adapter.log.debug('detected new value on port [' + _port + '_pressure' + ']: ' + secondary);    
+			adapter.log.debug('detected new value on port [' + _port + '_pressure' + ']: ' + secondary);
                         adapter.setState(_ports[_port].id + '_pressure', {val: secondary, ack: true, q: q});
                     } else
-		    adapter.log.debug('detected new value on port [' + _port + '_humidity' + ']: ' + secondary);    
+		    adapter.log.debug('detected new value on port [' + _port + '_humidity' + ']: ' + secondary);
                     adapter.setState(_ports[_port].id + '_humidity', {val: secondary, ack: true, q: q});
                 }
             } else
@@ -1333,7 +1323,7 @@ function processPortStateW(_port, value) {      //1Wire
              if (m) {
                  val = parseFloat(m[1]);
                  // If status changed
-		 processPortStateWstate(_port, id[0], val);   
+		 processPortStateWstate(_port, id[0], val);
                  /* if (val !== _ports[_port].value || _ports[_port].q !== q) {
                      _ports[_port].oldValue = _ports[_port].value;
                      if (_ports[_port].pty == 3 && _ports[_port].d == 5) {
@@ -1483,7 +1473,7 @@ function processPortStateI2C(_port, id, dev) {
     setTimeout(function () {
         test = false;
     }, 2500);
-}    
+}
 
 function pollStatus(dev) {
     /*for (var port = 0; port < adapter.config.ports.length; port++) {
@@ -1511,10 +1501,10 @@ function pollStatus(dev) {
             for (p = 0; p < _ports.length; p++) {
                 // process
                 if (!adapter.config.ports[p] || (adapter.config.ports[p].pty == 3 && adapter.config.ports[p].d == 5)) continue;
-		if (!adapter.config.ports[p] || (adapter.config.ports[p].pty == 4 && (adapter.config.ports[p].d == 20 || adapter.config.ports[p].d == 21))) continue;    
+		if (!adapter.config.ports[p] || (adapter.config.ports[p].pty == 4 && (adapter.config.ports[p].d == 20 || adapter.config.ports[p].d == 21))) continue;
                 processPortState(p, _ports[p]);
             }
-            // process 1Wire 
+            // process 1Wire
             if (ask1WireTemp) {
                 for (var po = 0; po < adapter.config.ports.length; po++) {
                     if (adapter.config.ports[po] && adapter.config.ports[po].pty == 3 && adapter.config.ports[po].d == 5) {
@@ -1537,7 +1527,7 @@ function pollStatus(dev) {
                         getPortStateI2C(po, processPortStateI2C);
                     }
                 }
-            }	
+            }
         }
     });
 }
@@ -1574,7 +1564,7 @@ function restApi(req, res) {
 		///if (values.ib)
                 adapter.sendTo('megadd.' + device, 'send', {pt: parseInt(values.pt, 10), val: values.ib});
 		///if (values.wg)
-                ///adapter.sendTo('megadd.' + device, 'send', {pt: parseInt(values.pt, 10), val: values.wg});    
+                ///adapter.sendTo('megadd.' + device, 'send', {pt: parseInt(values.pt, 10), val: values.wg});
                 res.writeHead(200, {'Content-Type': 'text/html'});
                 res.end('OK', 'utf8');
             } else {
@@ -1586,7 +1576,7 @@ function restApi(req, res) {
 				///if (values.ib)
                                 adapter.sendTo(id, 'send', {pt: parseInt(values.pt, 10), val: values.ib});
 				///if (values.wg)
-                                ///adapter.sendTo(id, 'send', {pt: parseInt(values.pt, 10), val: values.wg});    
+                                ///adapter.sendTo(id, 'send', {pt: parseInt(values.pt, 10), val: values.wg});
                                 res.writeHead(200, {'Content-Type': 'text/html'});
                                 res.end('OK', 'utf8');
                                 return;
@@ -1604,7 +1594,7 @@ function restApi(req, res) {
         }
         return;
     }
-    
+
     if (values.pt !== undefined) {
         var _port = parseInt(values.pt, 10);
 
@@ -1620,7 +1610,7 @@ function restApi(req, res) {
                 adapter.setState(adapter.config.ports[_port].id, values.ib, true);
 	    } else if (adapter.config.ports[_port].pty == 3 && adapter.config.ports[_port].d == 6) {
                 // process WG-26
-                adapter.setState(adapter.config.ports[_port].id, values.wg, true);	    
+                adapter.setState(adapter.config.ports[_port].id, values.wg, true);
             } else {
                 adapter.log.debug('reported new value for port ' + _port + ', request actual value');
                 // Get value from analog port
@@ -1667,7 +1657,7 @@ function sendCommand(port, value) {
             }
 	    if (adapter.config.ports[port].pty == 4 && adapter.config.ports[port].d == 4) {
                 adapter.setState(adapter.config.ports[port].id, value, true);
-            }	
+            }
         } else {
             adapter.log.warn('Unknown port ' + port);
         }
@@ -1677,7 +1667,7 @@ function sendCommand(port, value) {
 function sendCommandToDSA(port, value) {          //DS2413 port A
     //http://192.168.1.14/sec/?cmd=7A:0 or &cmd=7A:1
     var data = 'cmd=' + port + 'A' + ':' + value;
-    
+
     var parts = adapter.config.ip.split(':');
 
     var options = {
@@ -1701,7 +1691,7 @@ function sendCommandToDSA(port, value) {          //DS2413 port A
 function sendCommandToDSB(port, value) {          //DS2413 port B
     //http://192.168.1.14/sec/?cmd=7A:0 or &cmd=7A:1
     var data = 'cmd=' + port + 'B' + ':' + value;
-    
+
     var parts = adapter.config.ip.split(':');
 
     var options = {
@@ -1854,7 +1844,7 @@ function syncObjects() {
 	    if (adapter.config.ports[p].ext !== undefined) {   //EXT
                 adapter.config.ports[p].ext = parseInt(adapter.config.ports[p].ext, 10) || 0;
             }
-		
+
             settings.port = p;
 
             var obj = {
@@ -2004,7 +1994,7 @@ function syncObjects() {
                     if (obj.native.misc !== undefined) delete obj.native.misc;
                     if (obj.native.m2 !== undefined) delete obj.native.m2;
                     if (obj.native.fr !== undefined) delete obj.native.fr;
-                    if (obj.native.d !== undefined) delete obj.native.d;                    
+                    if (obj.native.d !== undefined) delete obj.native.d;
 		    obj1 = {
                         _id: adapter.namespace + '.' + id + '_B',
                         common: {
@@ -2246,7 +2236,7 @@ function syncObjects() {
                             write: false,
                             read: true,
                             unit: '°C',
-                            def: 0, 
+                            def: 0,
 			    min: -30,
                             max: 30,
                             desc: 'P' + p + ' - temperature',
@@ -2303,7 +2293,7 @@ function syncObjects() {
                         },
                         type: 'state'
                     };
-                    }				
+                    }
                 }
             } else
             if (settings.pty == 3 && settings.d == 6 && settings.m == 1) {  // Wiegand 26
@@ -2312,8 +2302,8 @@ function syncObjects() {
                 obj.common.desc = 'P' + p + ' - wiegand 26';
                 obj.common.type = 'string';
                 obj.common.def  = '';
-                
-            } else	    
+
+            } else
             // I2C sensor
             if (settings.pty == 4 && settings.m == 1) {
                 var test = '';
@@ -2332,7 +2322,7 @@ function syncObjects() {
                     for (var i in sensor)
                     if (sensor) {
                     if (sensor[i] == test) continue;
-                    
+
                     // Light Sensors  // settings.d == 2 || settings.d == 3 || settings.d == 7
                     if (sensor[i].indexOf('BH1750') !== -1) {
                         obj18 = {
@@ -2393,7 +2383,7 @@ function syncObjects() {
                                 name: 'P' + p
                             },
                             type:   'state'
-                        };    
+                        };
                     // Display  // settings.d == 4
                     } else if (sensor[i].indexOf('SSD1306') !== -1) {
                         obj21 = {
@@ -2647,7 +2637,7 @@ function syncObjects() {
                     }
 		}
             }
-            ///if (settings.pty == 4 && settings.m == 1 && settings.d != 0) {	
+            ///if (settings.pty == 4 && settings.m == 1 && settings.d != 0) {
             ///if (settings.pty == 4 && settings.m == 1) {
                 ///obj.common.write = false;
                 ///obj.common.read  = true;
@@ -2689,7 +2679,7 @@ function syncObjects() {
                     obj.common.desc  = 'P' + p + ' - light';
                     obj.common.type  = 'number';
                     obj.common.def   = 0;
-		    obj.common.unit  = 'lux';	
+		    obj.common.unit  = 'lux';
                     obj.common.role  = 'value.light';
 		// Display SSD1306
 	        } else if (settings.d == 4) {
@@ -2699,7 +2689,7 @@ function syncObjects() {
 		    obj.common.type  = 'string';
                     obj.common.def   = '';
 		    if (!obj.common.role) obj.common.role = 'state';
-		// BMP180	
+		// BMP180
                 } else if (settings.d == 5) {
                     obj.common.write = false;
                     obj.common.read  = true;
@@ -2729,7 +2719,7 @@ function syncObjects() {
                         },
                         type: 'state'
                     };
-		//BMx280	
+		//BMx280
 	        } else if (settings.d == 6) {
                     obj.common.write = false;
                     obj.common.read  = true;
@@ -2778,9 +2768,9 @@ function syncObjects() {
                         },
                         type: 'state'
 		    };
-		// MCP230XX	
+		// MCP230XX
                 } else if (settings.d == 20) {
-		    // MCP23008	
+		    // MCP23008
                     if (settings.ext == 8) {
                         obj = {
                             _id: adapter.namespace + '.' + id + '_P0',
@@ -3470,7 +3460,7 @@ function syncObjects() {
             } else {
                 newObjects.push(obj);
                 ports[obj._id] = obj;
-	    }    
+	    }
 
             if (obj1) {
                 newObjects.push(obj1);
@@ -3599,7 +3589,7 @@ function syncObjects() {
             if (obj34) {
                 newObjects.push(obj34);
                 ports[obj33._id] = obj34;
-            }	
+            }
         }
     }
 
@@ -3678,7 +3668,7 @@ function syncObjects() {
                 break;
             }
 	}
-	
+
 	// if EXT
         for (var po = 0; po < adapter.config.ports.length; po++) {
             if (adapter.config.ports[po].pty == 4 && (adapter.config.ports[po].d == 20 || adapter.config.ports[po].d == 21)) {
@@ -3686,14 +3676,14 @@ function syncObjects() {
                 break;
             }
         }
-	    
+
 	// if I2C
         for (var po = 0; po < adapter.config.ports.length; po++) {
             if (adapter.config.ports[po].pty == 4 && adapter.config.ports[po].m == 1) {
                 askI2Cport = true;
                 break;
             }
-        }    
+        }
 
         if (adapter.config.ip && adapter.config.ip !== '0.0.0.0') {
             pollStatus();
@@ -3731,5 +3721,4 @@ function main() {
     }
     syncObjects();
     adapter.subscribeStates('*');
-    processMessages(true);
 }

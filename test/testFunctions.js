@@ -14,7 +14,7 @@ function checkConnectionOfAdapter(cb, counter) {
         return;
     }
 
-    states.getState('system.adapter.megad.0.alive', function (err, state) {
+    states.getState('system.adapter.megadd.0.alive', function (err, state) {
         if (err) console.error(err);
         if (state && state.val) {
             cb && cb();
@@ -284,7 +284,7 @@ describe('Test MegaD', function() {
 
     it('Test MegaD: check creation of state', function (done) {
         this.timeout(5000);
-        checkValueOfState('megad.0.info.connection', true, function () {
+        checkValueOfState('megadd.0.p0_P0_counter', 0, function () {
             done();
         }, 10);
     });
@@ -292,7 +292,7 @@ describe('Test MegaD', function() {
     it('Test MegaD: check disconnection', function (done) {
         this.timeout(15000);
         megad.stop();
-        checkValueOfState('megad.0.info.connection', false, function () {
+        checkValueOfState('megadd.0.info.connection', false, function () {
             done();
         }, 10);
     });
